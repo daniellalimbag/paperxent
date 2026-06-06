@@ -1,0 +1,14 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Infrastructure-only marker so Prisma can generate a client before domain models exist.
+model ScaffoldMarker {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+}

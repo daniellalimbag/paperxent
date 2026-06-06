@@ -1,0 +1,37 @@
+{
+  "name": "paperxent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Production-grade monorepo scaffold for paper trading and portfolio analytics.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run docker:up && concurrently -n web,api -c cyan,green \"npm run dev -w @paperxent/web\" \"npm run dev -w @paperxent/api\"",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "docker:up": "docker compose up -d postgres redis",
+    "docker:down": "docker compose down",
+    "db:generate": "npm run db:generate -w @paperxent/database",
+    "db:migrate": "npm run db:migrate -w @paperxent/database",
+    "db:studio": "npm run db:studio -w @paperxent/database"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "@typescript-eslint/parser": "^8.48.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.2.6",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=20.11.0",
+    "npm": ">=10.0.0"
+  }
+}

@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-serif: Georgia, Cambria, 'Times New Roman', Times, serif;
+}
+
+html {
+  background: #f4efe3;
+  color: #27231d;
+}
+
+body {
+  min-height: 100vh;
+}
