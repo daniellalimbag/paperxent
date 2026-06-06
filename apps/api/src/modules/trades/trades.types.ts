@@ -1,6 +1,6 @@
 export type TradeSide = 'BUY' | 'SELL';
 
-export interface PlaceTradeInput {
+export interface ExecuteTradeInput {
   userId: string;
   side: TradeSide;
   ticker: string;
@@ -8,7 +8,22 @@ export interface PlaceTradeInput {
   price: string;
 }
 
-export interface TradeReceipt {
+export interface NormalizedTradeInput {
+  userId: string;
+  side: TradeSide;
+  ticker: string;
+  quantity: string;
+  price: string;
+}
+
+export interface TradeExecutionResult {
   transactionId: string;
-  status: 'accepted' | 'rejected';
+  side: TradeSide;
+  ticker: string;
+  quantity: string;
+  price: string;
+  userBalance: string;
+  portfolioQuantity: string;
+  averageBuyPrice: string | null;
+  executedAt: string;
 }

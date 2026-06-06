@@ -22,7 +22,7 @@ tradesRouter.post(
   '/',
   validateRequest(placeTradeSchema),
   asyncHandler(async (req, res) => {
-    const trade = await tradesService.placeTrade(req.body);
+    const trade = await tradesService.executeTrade(req.body);
     res.status(202).json({ data: trade });
   }),
 );
