@@ -7,6 +7,6 @@ import { usersRouter } from './users/users.routes.js';
 export const apiRouter = Router();
 
 apiRouter.use('/users', usersRouter);
-apiRouter.use('/trades', tradesRouter);
-apiRouter.use('/portfolios', portfoliosRouter);
+apiRouter.use('/trade', tradesRouter);
+apiRouter.use('/portfolio', portfoliosRouter);
 apiRouter.use('/market', marketRouter);

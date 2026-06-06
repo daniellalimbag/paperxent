@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { asyncHandler } from '../../shared/http/async-handler.js';
+import type { ApiSuccessResponse } from '../../shared/http/api-response.js';
 import { validateRequest } from '../../shared/http/validate-request.js';
 import { PortfoliosService } from './portfolios.service.js';
+import type { PortfolioValuation } from './portfolios.types.js';
 
 const getPortfolioSchema = z.object({
   params: z.object({
@@ -15,21 +17,13 @@ const portfoliosService = new PortfoliosService();
 export const portfoliosRouter = Router();
 
 portfoliosRouter.get(
-  '/:userId/valuation',
-  validateRequest(getPortfolioSchema),
-  asyncHandler(async (req, res) => {
-    const { userId } = getPortfolioSchema.shape.params.parse(req.params);
-    const valuation = await portfoliosService.getValuation({ userId });
-    res.json({ data: valuation });
-  }),
-);
-
-portfoliosRouter.get(
   '/:userId',
   validateRequest(getPortfolioSchema),
   asyncHandler(async (req, res) => {
     const { userId } = getPortfolioSchema.shape.params.parse(req.params);
-    const positions = await portfoliosService.getPortfolio({ userId });
-    res.json({ data: positions });
+    const valuation = await portfoliosService.getValuation({ userId });
+    const response: ApiSuccessResponse<PortfolioValuation> = { data: valuation };
+
+    res.json(response);
   }),
 );
