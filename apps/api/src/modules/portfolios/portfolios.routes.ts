@@ -15,6 +15,16 @@ const portfoliosService = new PortfoliosService();
 export const portfoliosRouter = Router();
 
 portfoliosRouter.get(
+  '/:userId/valuation',
+  validateRequest(getPortfolioSchema),
+  asyncHandler(async (req, res) => {
+    const { userId } = getPortfolioSchema.shape.params.parse(req.params);
+    const valuation = await portfoliosService.getValuation({ userId });
+    res.json({ data: valuation });
+  }),
+);
+
+portfoliosRouter.get(
   '/:userId',
   validateRequest(getPortfolioSchema),
   asyncHandler(async (req, res) => {
