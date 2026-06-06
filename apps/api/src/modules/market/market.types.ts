@@ -7,3 +7,9 @@ export interface MarketQuote {
 export interface GetQuoteInput {
   ticker: string;
 }
+
+export interface PriceTick extends MarketQuote {
+  previousPrice: string;
+  change: string;
+  changePercent: string;
+}
