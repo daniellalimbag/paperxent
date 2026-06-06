@@ -7,8 +7,56 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Infrastructure-only marker so Prisma can generate a client before domain models exist.
-model ScaffoldMarker {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
+enum TransactionType {
+  BUY
+  SELL
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  // Decimal avoids floating-point errors for cash balances.
+  balance      Decimal       @default(0) @db.Decimal(20, 4)
+  createdAt    DateTime      @default(now())
+  portfolios   Portfolio[]
+  transactions Transaction[]
+
+  // Supports account creation/admin screens ordered by newest users.
+  @@index([createdAt])
+}
+
+model Portfolio {
+  id              String   @id @default(cuid())
+  userId          String
+  ticker          String   @db.VarChar(16)
+  // Decimal supports fractional shares while preserving exact arithmetic.
+  quantity        Decimal  @default(0) @db.Decimal(24, 8)
+  averageBuyPrice Decimal  @db.Decimal(20, 4)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // A user should have only one current position row per ticker.
+  @@unique([userId, ticker])
+  // Optimizes portfolio reads and ticker-specific position updates.
+  @@index([userId])
+  @@index([ticker])
+}
+
+model Transaction {
+  id        String          @id @default(cuid())
+  userId    String
+  type      TransactionType
+  ticker    String          @db.VarChar(16)
+  quantity  Decimal         @db.Decimal(24, 8)
+  price     Decimal         @db.Decimal(20, 4)
+  // Indexed append timestamp supports high-frequency inserts and time-window reads.
+  timestamp DateTime        @default(now())
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Primary history query path: one user's recent transactions.
+  @@index([userId, timestamp(sort: Desc)])
+  // Supports ticker-level analytics without forcing scans across all rows.
+  @@index([ticker, timestamp(sort: Desc)])
+  // Keeps BUY/SELL filtering efficient for ledgers and reporting.
+  @@index([userId, type, timestamp(sort: Desc)])
 }

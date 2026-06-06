@@ -20,10 +20,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@prisma/client": "^5.17.0"
+    "@prisma/client": "5.22.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
-    "prisma": "^5.17.0"
+    "prisma": "5.22.0"
   }
 }
