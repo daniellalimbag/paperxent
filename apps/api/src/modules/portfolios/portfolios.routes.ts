@@ -1,26 +1,19 @@
 import { Router } from 'express';
-import { z } from 'zod';
 import { asyncHandler } from '../../shared/http/async-handler.js';
 import type { ApiSuccessResponse } from '../../shared/http/api-response.js';
-import { validateRequest } from '../../shared/http/validate-request.js';
+import { verifyToken } from '../auth/auth.middleware.js';
 import { PortfoliosService } from './portfolios.service.js';
 import type { PortfolioValuation } from './portfolios.types.js';
-
-const getPortfolioSchema = z.object({
-  params: z.object({
-    userId: z.string().min(1),
-  }),
-});
 
 const portfoliosService = new PortfoliosService();
 
 export const portfoliosRouter = Router();
 
 portfoliosRouter.get(
-  '/:userId',
-  validateRequest(getPortfolioSchema),
+  '/',
+  verifyToken,
   asyncHandler(async (req, res) => {
-    const { userId } = getPortfolioSchema.shape.params.parse(req.params);
+    const userId = req.user!.userId;
     const valuation = await portfoliosService.getValuation({ userId });
     const response: ApiSuccessResponse<PortfolioValuation> = { data: valuation };
 
