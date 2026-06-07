@@ -1,6 +1,8 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
 import { prisma } from '@paperxent/database';
 import { AppError } from '../../shared/errors/app-error.js';
+import { globalEventBus } from '../../shared/events/event-bus.js';
+import type { TradeExecutedEvent } from '../../shared/events/event.types.js';
 import type { NormalizedTradeInput, TradeExecutionResult } from './trades.types.js';
 
 export class TradesRepository {
@@ -102,9 +104,10 @@ export class TradesRepository {
       select: { balance: true },
     });
 
-    return {
+    const result = {
       transactionId: transaction.id,
-      side: 'BUY',
+      userId: input.userId,
+      side: 'BUY' as const,
       ticker: input.ticker,
       quantity: transaction.quantity.toString(),
       price: transaction.price.toString(),
@@ -113,6 +116,18 @@ export class TradesRepository {
       averageBuyPrice: nextPosition.averageBuyPrice.toString(),
       executedAt: transaction.timestamp.toISOString(),
     };
+
+    // Emit TradeExecuted event
+    const event: TradeExecutedEvent = {
+      eventType: 'TradeExecuted',
+      eventId: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      data: result,
+    };
+
+    void globalEventBus.publish(event);
+
+    return result;
   }
 
   private async executeSell(
@@ -175,9 +190,10 @@ export class TradesRepository {
       },
     });
 
-    return {
+    const result = {
       transactionId: transaction.id,
-      side: 'SELL',
+      userId: input.userId,
+      side: 'SELL' as const,
       ticker: input.ticker,
       quantity: transaction.quantity.toString(),
       price: transaction.price.toString(),
@@ -186,6 +202,18 @@ export class TradesRepository {
       averageBuyPrice: remainingQuantity.isZero() ? null : currentPosition.averageBuyPrice.toString(),
       executedAt: transaction.timestamp.toISOString(),
     };
+
+    // Emit TradeExecuted event
+    const event: TradeExecutedEvent = {
+      eventType: 'TradeExecuted',
+      eventId: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      data: result,
+    };
+
+    void globalEventBus.publish(event);
+
+    return result;
   }
 
   private calculateWeightedAverageBuyPrice({

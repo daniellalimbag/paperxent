@@ -1,6 +1,8 @@
 import type { Server as HttpServer } from 'node:http';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { logger } from '../../shared/logging/logger.js';
+import { globalEventBus } from '../../shared/events/event-bus.js';
+import type { PriceTickEvent } from '../../shared/events/event.types.js';
 import { MarketRepository } from './market.repository.js';
 import type { PriceTick } from './market.types.js';
 
@@ -107,6 +109,18 @@ export class PriceFeedService {
     const ticks = Array.from(this.prices.values()).map((state) => this.nextTick(state));
 
     await Promise.all(ticks.map((tick) => this.marketRepository.saveQuote(tick)));
+
+    // Emit PriceTick events for each ticker
+    for (const tick of ticks) {
+      const event: PriceTickEvent = {
+        eventType: 'PriceTick',
+        eventId: crypto.randomUUID(),
+        timestamp: tick.timestamp,
+        data: tick,
+      };
+
+      void globalEventBus.publish(event);
+    }
 
     this.broadcast({
       type: 'price_ticks',

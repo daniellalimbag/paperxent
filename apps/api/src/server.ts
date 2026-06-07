@@ -3,8 +3,12 @@ import { env } from './config/env.js';
 import { PriceFeedService } from './modules/market/price-feed.service.js';
 import { redis } from './shared/cache/redis.js';
 import { logger } from './shared/logging/logger.js';
+import { initializeEventSystem } from './shared/events/setup.js';
 
 const app = createApp();
+
+// Initialize event system
+initializeEventSystem();
 
 const server = app.listen(env.API_PORT, () => {
   logger.info('PaperXent API listening', {
