@@ -34,6 +34,8 @@ export default function LoginPage() {
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.message);
+      } else if (err instanceof Error) {
+        toast.error(err.message);
       } else {
         toast.error('Login failed');
       }

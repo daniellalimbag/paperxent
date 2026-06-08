@@ -45,6 +45,8 @@ export default function RegisterPage() {
     } catch (err) {
       if (err instanceof ApiError) {
         toast.error(err.message);
+      } else if (err instanceof Error) {
+        toast.error(err.message);
       } else {
         toast.error('Registration failed');
       }

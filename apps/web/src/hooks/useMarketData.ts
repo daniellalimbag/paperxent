@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { getDefaultWsPricesUrl } from '@/lib/public-env';
 
 export interface PriceData {
   ticker: string;
@@ -11,7 +12,7 @@ export interface PriceData {
 export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
 
 interface UseMarketDataOptions {
-  /** WebSocket server URL. Defaults to NEXT_PUBLIC_WS_URL env var or ws://localhost:8080 */
+  /** WebSocket server URL. Defaults to `NEXT_PUBLIC_WS_URL` or API host + `/ws/prices` */
   wsUrl?: string;
   /** Base reconnect delay in ms (doubles each retry, capped at maxReconnectInterval). Default: 1000 */
   reconnectInterval?: number;
@@ -134,9 +135,8 @@ export function useMarketData(
     try {
       const url =
         wsUrlRef.current ||
-        (typeof window !== 'undefined' && (window as any).NEXT_PUBLIC_WS_URL) ||
         (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_WS_URL) ||
-        'ws://localhost:3001/ws/prices';
+        getDefaultWsPricesUrl();
 
       const ws = new WebSocket(url);
       wsRef.current = ws;

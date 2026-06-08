@@ -1,6 +1,5 @@
 import type {
   ApiSuccessResponse,
-  ApiErrorResponse,
   PortfolioValuation,
   ExecuteTradeInput,
   TradeExecutionResult,
@@ -10,7 +9,9 @@ import type {
   RefreshTokenInput,
 } from '@paperxent/shared-types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { getPublicApiUrl } from '@/lib/public-env';
+
+const API_BASE_URL = getPublicApiUrl();
 
 /** Cookie name must match apps/web/src/middleware.ts */
 const ACCESS_TOKEN_COOKIE = 'accessToken';
@@ -35,13 +36,38 @@ function clearAuthSession(): void {
 
 class ApiError extends Error {
   constructor(
-    public message: string,
+    message: string,
     public statusCode?: number,
     public code?: string
   ) {
     super(message);
     this.name = 'ApiError';
   }
+}
+
+/**
+ * API may return `{ error: "string" }` (auth routes) or `{ error: { code, message } }` (error handler).
+ * Shared-types `ApiErrorResponse` only documents the string form; normalize here.
+ */
+function messageFromErrorBody(body: unknown): { message: string; code?: string } {
+  if (typeof body !== 'object' || body === null) {
+    return { message: 'Request failed' };
+  }
+  const err = (body as Record<string, unknown>).error;
+  if (typeof err === 'string') {
+    return { message: err };
+  }
+  if (typeof err === 'object' && err !== null && 'message' in err) {
+    const msg = (err as { message?: unknown }).message;
+    if (typeof msg === 'string') {
+      const code = (err as { code?: unknown }).code;
+      return {
+        message: msg,
+        code: typeof code === 'string' ? code : undefined,
+      };
+    }
+  }
+  return { message: 'Request failed' };
 }
 
 async function request<T>(
@@ -60,17 +86,25 @@ async function request<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    const errorData: ApiErrorResponse = await response.json().catch(() => ({ error: 'Unknown error' }));
-    throw new ApiError(errorData.error, response.status, errorData.code);
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    });
+  } catch (e) {
+    const hint = `Cannot reach API at ${API_BASE_URL}. Start Docker (Postgres + Redis) and the API, or set NEXT_PUBLIC_API_URL.`;
+    const message = e instanceof TypeError ? hint : e instanceof Error ? e.message : 'Network error';
+    throw new ApiError(message, 0, 'NETWORK');
   }
 
-  return response.json();
+  if (!response.ok) {
+    const body: unknown = await response.json().catch(() => null);
+    const { message, code } = messageFromErrorBody(body);
+    throw new ApiError(message, response.status, code);
+  }
+
+  return response.json() as Promise<T>;
 }
 
 // Auth API
@@ -80,7 +114,16 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify(input),
     });
-    persistAuthSession(response);
+    try {
+      persistAuthSession(response);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      throw new ApiError(
+        `Could not save session in the browser (${msg}). Check that cookies and storage are allowed for this site.`,
+        0,
+        'SESSION_PERSIST'
+      );
+    }
     return response;
   },
 
@@ -89,7 +132,16 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify(input),
     });
-    persistAuthSession(response);
+    try {
+      persistAuthSession(response);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      throw new ApiError(
+        `Could not save session in the browser (${msg}). Check that cookies and storage are allowed for this site.`,
+        0,
+        'SESSION_PERSIST'
+      );
+    }
     return response;
   },
 
@@ -98,7 +150,16 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify(input),
     });
-    persistAuthSession(response);
+    try {
+      persistAuthSession(response);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Unknown error';
+      throw new ApiError(
+        `Could not save session in the browser (${msg}). Check that cookies and storage are allowed for this site.`,
+        0,
+        'SESSION_PERSIST'
+      );
+    }
     return response;
   },
 
