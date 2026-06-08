@@ -64,25 +64,27 @@ export interface TradeExecutionResult {
   executedAt: string;
 }
 
-// Portfolio types
-export interface PortfolioValuation {
-  userId: string;
-  totalValue: string;
-  cashBalance: string;
-  holdingsValue: string;
-  totalGainLoss: string;
-  totalGainLossPercent: string;
-  holdings: Holding[];
-}
-
-export interface Holding {
+// Portfolio types (aligned with GET /api/portfolio response)
+export interface AssetValuation {
   ticker: string;
   quantity: string;
   averageBuyPrice: string;
-  currentPrice: string;
+  latestPrice: string;
+  costBasis: string;
   marketValue: string;
-  gainLoss: string;
-  gainLossPercent: string;
+  unrealizedPnl: string;
+  roi: string;
+  pricedAt: string;
+}
+
+export interface PortfolioValuation {
+  userId: string;
+  totalCostBasis: string;
+  totalPortfolioValue: string;
+  totalUnrealizedPnl: string;
+  totalRoi: string;
+  assets: AssetValuation[];
+  valuedAt: string;
 }
 
 // Market data types

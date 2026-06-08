@@ -5,7 +5,7 @@ import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Skeleton } from '../ui/Skeleton';
 import { portfolioApi, ApiError } from '@/lib/api-client';
-import type { PortfolioValuation, Holding } from '@paperxent/shared-types';
+import type { AssetValuation, PortfolioValuation } from '@paperxent/shared-types';
 
 export function HoldingsTable() {
   const [portfolio, setPortfolio] = useState<PortfolioValuation | null>(null);
@@ -30,7 +30,7 @@ export function HoldingsTable() {
       }
     }
 
-    loadPortfolio();
+    void loadPortfolio();
   }, []);
 
   if (loading) {
@@ -66,7 +66,7 @@ export function HoldingsTable() {
     );
   }
 
-  const holdings = portfolio.holdings;
+  const holdings: AssetValuation[] = portfolio.assets ?? [];
 
   return (
     <Card className="flex-1">
@@ -96,10 +96,10 @@ export function HoldingsTable() {
                 {holdings.map((holding) => {
                   const quantity = parseFloat(holding.quantity);
                   const avgBuyPrice = parseFloat(holding.averageBuyPrice);
-                  const currentPrice = parseFloat(holding.currentPrice);
+                  const currentPrice = parseFloat(holding.latestPrice);
                   const marketValue = parseFloat(holding.marketValue);
-                  const gainLoss = parseFloat(holding.gainLoss);
-                  const gainLossPercent = parseFloat(holding.gainLossPercent);
+                  const gainLoss = parseFloat(holding.unrealizedPnl);
+                  const gainLossPercent = parseFloat(holding.roi) * 100;
 
                   return (
                     <tr key={holding.ticker} className="border-b border-paper-line hover:bg-paper-50">

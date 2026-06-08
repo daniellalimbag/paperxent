@@ -5,9 +5,16 @@ import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Skeleton } from '../ui/Skeleton';
 import { portfolioApi, ApiError } from '@/lib/api-client';
+import { useAuth } from '@/contexts/AuthContext';
 import type { PortfolioValuation } from '@paperxent/shared-types';
 
+function num(s: string | undefined): number {
+  const n = parseFloat(s ?? '0');
+  return Number.isFinite(n) ? n : 0;
+}
+
 export function PortfolioSummary() {
+  const { user } = useAuth();
   const [portfolio, setPortfolio] = useState<PortfolioValuation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +37,7 @@ export function PortfolioSummary() {
       }
     }
 
-    loadPortfolio();
+    void loadPortfolio();
   }, []);
 
   if (loading) {
@@ -66,11 +73,12 @@ export function PortfolioSummary() {
     );
   }
 
-  const totalValue = parseFloat(portfolio.totalValue);
-  const cashBalance = parseFloat(portfolio.cashBalance);
-  const holdingsValue = parseFloat(portfolio.holdingsValue);
-  const totalGainLoss = parseFloat(portfolio.totalGainLoss);
-  const totalGainLossPercent = parseFloat(portfolio.totalGainLossPercent);
+  const cashBalance = num(user?.balance);
+  const holdingsValue = num(portfolio.totalPortfolioValue);
+  const totalValue = cashBalance + holdingsValue;
+  const totalGainLoss = num(portfolio.totalUnrealizedPnl);
+  const totalGainLossPercent = num(portfolio.totalRoi) * 100;
+  const positionCount = portfolio.assets?.length ?? 0;
 
   return (
     <Card>
@@ -84,6 +92,7 @@ export function PortfolioSummary() {
             <p className="text-2xl font-bold text-paper-ink">
               ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </p>
+            <p className="text-xs text-paper-muted mt-1">Cash + securities</p>
           </div>
 
           <div>
@@ -121,9 +130,7 @@ export function PortfolioSummary() {
 
           <div>
             <p className="text-sm text-paper-muted mb-1">Number of Holdings</p>
-            <p className="text-2xl font-bold text-paper-ink">
-              {portfolio.holdings.length}
-            </p>
+            <p className="text-2xl font-bold text-paper-ink">{positionCount}</p>
           </div>
         </div>
       </CardContent>
