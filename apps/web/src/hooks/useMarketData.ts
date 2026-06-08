@@ -134,8 +134,9 @@ export function useMarketData(
     try {
       const url =
         wsUrlRef.current ||
+        (typeof window !== 'undefined' && (window as any).NEXT_PUBLIC_WS_URL) ||
         (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_WS_URL) ||
-        'ws://localhost:8080';
+        'ws://localhost:3001/ws/prices';
 
       const ws = new WebSocket(url);
       wsRef.current = ws;
