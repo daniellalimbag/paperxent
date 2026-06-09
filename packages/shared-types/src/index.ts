@@ -64,6 +64,27 @@ export interface TradeExecutionResult {
   executedAt: string;
 }
 
+/** One row in GET /api/transactions/:userId */
+export interface TransactionHistoryItem {
+  id: string;
+  userId: string;
+  type: TradeSide;
+  ticker: string;
+  quantity: string;
+  price: string;
+  /** quantity × price */
+  total: string;
+  timestamp: string;
+}
+
+/** Cursor-based page from transaction list API */
+export interface PaginatedResponse<T> {
+  items: T[];
+  /** Pass as `cursor` query param for the next page; null when no more rows */
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
 // Portfolio types (aligned with GET /api/portfolio response)
 export interface AssetValuation {
   ticker: string;
