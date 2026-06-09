@@ -41,3 +41,7 @@ npm run dev
 - API: http://localhost:4000
 - PostgreSQL: localhost:5432
 - Redis: localhost:6379
+
+## Transaction history API
+
+- `GET /api/transactions/:userId` (Bearer auth; `:userId` must match the token) — query: `cursor`, `limit` (default 20, max 100), `type` (`BUY` | `SELL`), `ticker`, `from`, `to` (ISO date strings). Returns `{ data: PaginatedResponse<TransactionHistoryItem> }` with cursor-based pagination.

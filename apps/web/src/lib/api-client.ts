@@ -7,6 +7,9 @@ import type {
   RegisterInput,
   LoginInput,
   RefreshTokenInput,
+  PaginatedResponse,
+  TransactionHistoryItem,
+  TradeSide,
 } from '@paperxent/shared-types';
 
 import { getPublicApiUrl } from '@/lib/public-env';
@@ -204,6 +207,31 @@ export const tradeApi = {
       method: 'POST',
       body: JSON.stringify(input),
     });
+    return response.data;
+  },
+};
+
+export interface TransactionListParams {
+  cursor?: string;
+  limit?: number;
+  type?: TradeSide;
+  ticker?: string;
+  from?: string;
+  to?: string;
+}
+
+export const transactionsApi = {
+  async list(userId: string, params: TransactionListParams = {}): Promise<PaginatedResponse<TransactionHistoryItem>> {
+    const search = new URLSearchParams();
+    if (params.cursor) search.set('cursor', params.cursor);
+    if (params.limit != null) search.set('limit', String(params.limit));
+    if (params.type) search.set('type', params.type);
+    if (params.ticker) search.set('ticker', params.ticker.trim());
+    if (params.from) search.set('from', params.from);
+    if (params.to) search.set('to', params.to);
+    const qs = search.toString();
+    const path = `/api/transactions/${encodeURIComponent(userId)}${qs ? `?${qs}` : ''}`;
+    const response = await request<ApiSuccessResponse<PaginatedResponse<TransactionHistoryItem>>>(path);
     return response.data;
   },
 };
