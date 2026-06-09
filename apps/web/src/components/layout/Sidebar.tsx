@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, Briefcase, TrendingUp, FileText, Settings, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -9,19 +10,24 @@ import { toast } from 'sonner';
 interface NavItem {
   label: string;
   icon: React.ReactNode;
-  active?: boolean;
   href: string;
 }
 
 const navItems: NavItem[] = [
-  { label: 'Dashboard', icon: <LayoutDashboard size={20} />, active: true, href: '/dashboard' },
+  { label: 'Dashboard', icon: <LayoutDashboard size={20} />, href: '/dashboard' },
   { label: 'Portfolio', icon: <Briefcase size={20} />, href: '/portfolio' },
   { label: 'Trade', icon: <TrendingUp size={20} />, href: '/trade' },
-  { label: 'Transactions', icon: <FileText size={20} />, href: '/transactions' },
+  { label: 'History', icon: <FileText size={20} />, href: '/history' },
   { label: 'Settings', icon: <Settings size={20} />, href: '/settings' },
 ];
 
+function isActive(pathname: string, href: string): boolean {
+  if (href === '/') return pathname === '/';
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function Sidebar() {
+  const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { logout, user } = useAuth();
   const router = useRouter();
@@ -31,7 +37,7 @@ export function Sidebar() {
       await logout();
       toast.success('Logged out successfully');
       router.push('/');
-    } catch (error) {
+    } catch {
       toast.error('Failed to logout');
     }
   };
@@ -56,21 +62,22 @@ export function Sidebar() {
         </div>
 
         <nav className="space-y-2">
-          {navItems.map((item) => (
-            <a
-              key={item.label}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                item.active
-                  ? 'bg-sage-500 text-white'
-                  : 'text-paper-muted hover:bg-paper-100'
-              } ${isCollapsed ? 'justify-center' : ''}`}
-              title={isCollapsed ? item.label : ''}
-            >
-              {item.icon}
-              {!isCollapsed && <span className="font-medium">{item.label}</span>}
-            </a>
-          ))}
+          {navItems.map((item) => {
+            const active = isActive(pathname, item.href);
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  active ? 'bg-sage-500 text-white' : 'text-paper-muted hover:bg-paper-100'
+                } ${isCollapsed ? 'justify-center' : ''}`}
+                title={isCollapsed ? item.label : ''}
+              >
+                {item.icon}
+                {!isCollapsed && <span className="font-medium">{item.label}</span>}
+              </Link>
+            );
+          })}
         </nav>
 
         {!isCollapsed && (

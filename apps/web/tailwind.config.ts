@@ -15,6 +15,7 @@ const config: Config = {
         },
         sage: {
           500: '#7c8b6f',
+          600: '#6b7a5f',
           700: '#4f6045',
         },
         clay: {
