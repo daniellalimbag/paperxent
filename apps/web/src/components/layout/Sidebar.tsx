@@ -1,24 +1,40 @@
 'use client';
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Briefcase, TrendingUp, FileText, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { LayoutDashboard, Briefcase, TrendingUp, FileText, Settings, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface NavItem {
   label: string;
   icon: React.ReactNode;
   active?: boolean;
+  href: string;
 }
 
 const navItems: NavItem[] = [
-  { label: 'Dashboard', icon: <LayoutDashboard size={20} />, active: true },
-  { label: 'Portfolio', icon: <Briefcase size={20} /> },
-  { label: 'Trade', icon: <TrendingUp size={20} /> },
-  { label: 'Transactions', icon: <FileText size={20} /> },
-  { label: 'Settings', icon: <Settings size={20} /> },
+  { label: 'Dashboard', icon: <LayoutDashboard size={20} />, active: true, href: '/dashboard' },
+  { label: 'Portfolio', icon: <Briefcase size={20} />, href: '/portfolio' },
+  { label: 'Trade', icon: <TrendingUp size={20} />, href: '/trade' },
+  { label: 'Transactions', icon: <FileText size={20} />, href: '/transactions' },
+  { label: 'Settings', icon: <Settings size={20} />, href: '/settings' },
 ];
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { logout, user } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Logged out successfully');
+      router.push('/');
+    } catch (error) {
+      toast.error('Failed to logout');
+    }
+  };
 
   return (
     <aside className={`bg-white border-r border-paper-line min-h-screen transition-all duration-300 relative ${isCollapsed ? 'w-20' : 'w-64'}`}>
@@ -43,7 +59,7 @@ export function Sidebar() {
           {navItems.map((item) => (
             <a
               key={item.label}
-              href="#"
+              href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 item.active
                   ? 'bg-sage-500 text-white'
@@ -58,11 +74,18 @@ export function Sidebar() {
         </nav>
 
         {!isCollapsed && (
-          <div className="absolute bottom-6 left-6 right-6">
+          <div className="absolute bottom-6 left-6 right-6 space-y-4">
             <div className="bg-paper-100 rounded-lg p-4 border border-paper-line">
-              <p className="text-sm text-paper-muted">Paper Trading</p>
-              <p className="text-xs text-paper-muted mt-1">No real money involved</p>
+              <p className="text-sm font-medium text-paper-ink">{user?.email}</p>
+              <p className="text-xs text-paper-muted mt-1">Balance: ${user?.balance}</p>
             </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-paper-muted hover:bg-paper-100 w-full"
+            >
+              <LogOut size={20} />
+              <span className="font-medium">Logout</span>
+            </button>
           </div>
         )}
       </div>
