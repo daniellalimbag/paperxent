@@ -10,6 +10,8 @@ import type {
   PaginatedResponse,
   TransactionHistoryItem,
   TradeSide,
+  AnalyticsRange,
+  PortfolioAnalyticsPayload,
 } from '@paperxent/shared-types';
 
 import { getPublicApiUrl } from '@/lib/public-env';
@@ -96,7 +98,7 @@ async function request<T>(
       headers,
     });
   } catch (e) {
-    const hint = `Cannot reach API at ${API_BASE_URL}. Start Docker (Postgres + Redis) and the API, or set NEXT_PUBLIC_API_URL.`;
+    const hint = `Cannot reach API at ${API_BASE_URL}. Docker Compose here only runs Postgres and Redis — the Express app must run on your machine (port 4000), e.g. run "npm run dev" from the repo root or "npm run dev -w @paperxent/api". If the API is elsewhere, set NEXT_PUBLIC_API_URL in apps/web/.env.local.`;
     const message = e instanceof TypeError ? hint : e instanceof Error ? e.message : 'Network error';
     throw new ApiError(message, 0, 'NETWORK');
   }
@@ -232,6 +234,15 @@ export const transactionsApi = {
     const qs = search.toString();
     const path = `/api/transactions/${encodeURIComponent(userId)}${qs ? `?${qs}` : ''}`;
     const response = await request<ApiSuccessResponse<PaginatedResponse<TransactionHistoryItem>>>(path);
+    return response.data;
+  },
+};
+
+export const analyticsApi = {
+  async get(userId: string, range: AnalyticsRange = '30d'): Promise<PortfolioAnalyticsPayload> {
+    const qs = new URLSearchParams({ range });
+    const path = `/api/analytics/${encodeURIComponent(userId)}?${qs.toString()}`;
+    const response = await request<ApiSuccessResponse<PortfolioAnalyticsPayload>>(path);
     return response.data;
   },
 };

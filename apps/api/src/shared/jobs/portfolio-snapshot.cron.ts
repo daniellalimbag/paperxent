@@ -1,8 +1,8 @@
 import { schedule } from 'node-cron';
 import { Prisma } from '@prisma/client';
-import { AnalyticsRepository } from '../modules/analytics/analytics.repository.js';
-import { PortfoliosService } from '../modules/portfolios/portfolios.service.js';
-import { logger } from './logging/logger.js';
+import { AnalyticsRepository } from '../../modules/analytics/analytics.repository.js';
+import { PortfoliosService } from '../../modules/portfolios/portfolios.service.js';
+import { logger } from '../logging/logger.js';
 
 function utcDateOnly(d: Date): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));

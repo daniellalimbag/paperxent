@@ -45,3 +45,10 @@ npm run dev
 ## Transaction history API
 
 - `GET /api/transactions/:userId` (Bearer auth; `:userId` must match the token) — query: `cursor`, `limit` (default 20, max 100), `type` (`BUY` | `SELL`), `ticker`, `from`, `to` (ISO date strings). Returns `{ data: PaginatedResponse<TransactionHistoryItem> }` with cursor-based pagination.
+
+## Portfolio analytics
+
+- **Migration:** run `npm run db:migrate` (or `npm run db:migrate` from the repo root per your scripts) after pulling — adds `PortfolioSnapshot` (`userId`, `snapshotDate` @date, `totalAccountValue` = cash + securities at capture time).
+- **Cron:** `node-cron` runs **daily at 00:00 UTC** and upserts one row per user (`apps/api/src/shared/jobs/portfolio-snapshot.cron.ts`, started from `server.ts`).
+- **API:** `GET /api/analytics/:userId?range=7d|30d|all` (Bearer auth; user id must match token). Response `{ data: PortfolioAnalyticsPayload }` with snake_case fields: `value_over_time`, `allocation`, `per_asset_roi`, `valued_at`. The last `value_over_time` point is **live** (current cash + `PortfoliosService.getValuation()`); historical points come from snapshots.
+- **Web:** `/portfolio` — Recharts line / donut / bar charts, **7D / 30D / All** range, responsive layout (same light theme as the rest of the app).
