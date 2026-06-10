@@ -108,6 +108,35 @@ export interface PortfolioValuation {
   valuedAt: string;
 }
 
+// GET /api/analytics/:userId — snake_case keys match API JSON
+export type AnalyticsRange = '7d' | '30d' | 'all';
+
+export interface ValueOverTimePoint {
+  date: string;
+  total_account_value: string;
+  is_live?: boolean;
+}
+
+export interface AllocationSlice {
+  ticker: string;
+  market_value: string;
+  percent: string;
+}
+
+export interface PerAssetRoiPoint {
+  ticker: string;
+  roi: string;
+  unrealized_pnl: string;
+}
+
+export interface PortfolioAnalyticsPayload {
+  range: AnalyticsRange;
+  value_over_time: ValueOverTimePoint[];
+  allocation: AllocationSlice[];
+  per_asset_roi: PerAssetRoiPoint[];
+  valued_at: string;
+}
+
 // Market data types
 export interface PriceTick {
   ticker: string;
