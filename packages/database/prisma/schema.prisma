@@ -13,17 +13,31 @@ enum TransactionType {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  passwordHash String
+  id                 String               @id @default(cuid())
+  email              String               @unique
+  passwordHash       String
   // Decimal avoids floating-point errors for cash balances.
-  balance      Decimal       @default(0) @db.Decimal(20, 4)
-  createdAt    DateTime      @default(now())
-  portfolios   Portfolio[]
-  transactions Transaction[]
+  balance            Decimal              @default(0) @db.Decimal(20, 4)
+  createdAt          DateTime             @default(now())
+  portfolios         Portfolio[]
+  transactions       Transaction[]
+  portfolioSnapshots PortfolioSnapshot[]
 
   // Supports account creation/admin screens ordered by newest users.
   @@index([createdAt])
+}
+
+// End-of-day total account value (cash + securities) for analytics charts.
+model PortfolioSnapshot {
+  id                 String   @id @default(cuid())
+  userId             String
+  snapshotDate       DateTime @db.Date
+  totalAccountValue  Decimal  @db.Decimal(20, 4)
+  createdAt          DateTime @default(now())
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, snapshotDate])
+  @@index([userId, snapshotDate(sort: Desc)])
 }
 
 model Portfolio {
