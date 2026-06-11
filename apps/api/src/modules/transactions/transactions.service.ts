@@ -3,6 +3,7 @@ import type { TransactionType } from '@prisma/client';
 import { AppError } from '../../shared/errors/app-error.js';
 import type { PaginatedResponse, TransactionHistoryItem } from '@paperxent/shared-types';
 import { TransactionsRepository } from './transactions.repository.js';
+import type { ListTransactionsFilters } from './transactions.types.js';
 
 export interface ListTransactionsParams {
   requesterUserId: string;
@@ -76,15 +77,17 @@ export class TransactionsService {
       });
     }
 
-    const result = await this.repository.listTransactions({
+    const filters: ListTransactionsFilters = {
       userId: params.pathUserId,
-      cursor: params.cursor,
       limit: params.limit,
-      type: params.type,
-      ticker: params.ticker,
-      from,
-      to,
-    });
+    };
+    if (params.cursor) filters.cursor = params.cursor;
+    if (params.type !== undefined) filters.type = params.type;
+    if (params.ticker) filters.ticker = params.ticker;
+    if (from !== undefined) filters.from = from;
+    if (to !== undefined) filters.to = to;
+
+    const result = await this.repository.listTransactions(filters);
 
     if (result.invalidCursor) {
       throw new AppError({

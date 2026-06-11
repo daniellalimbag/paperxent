@@ -16,7 +16,7 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const accessToken = req.cookies.get('accessToken')?.value;
 
-  // Check if user is authenticated (cookie is set alongside localStorage after login/register)
+  // Authenticated when the httpOnly access token cookie is present (set by /api/auth/* Route Handlers).
   const isAuthenticated = !!accessToken?.trim();
 
   // Redirect authenticated users away from login/register
@@ -45,9 +45,12 @@ export const config = {
     '/dashboard/:path*',
     '/portfolio',
     '/portfolio/:path*',
+    '/trade',
     '/trade/:path*',
     '/history',
     '/history/:path*',
+    '/settings',
+    '/settings/:path*',
     '/login',
     '/register',
   ],

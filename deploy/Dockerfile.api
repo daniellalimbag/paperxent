@@ -1,0 +1,12 @@
+# Build from repository root: docker build -f deploy/Dockerfile.api .
+FROM node:20-bookworm-slim
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+
+COPY . .
+RUN npm ci && npm run db:generate && npm run build -w @paperxent/api
+
+ENV NODE_ENV=production
+EXPOSE 4000
+CMD ["node", "apps/api/dist/server.js"]

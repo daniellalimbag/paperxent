@@ -1,10 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { AuthService } from './auth.service.js';
 import { AuthRepository } from './auth.repository.js';
 import { AppError } from '../../shared/errors/app-error.js';
-import type { JwtPayload, AuthPayload } from './auth.types.js';
+import type { AuthPayload } from './auth.types.js';
 
-// Extend Express Request type to include user
+/* eslint-disable @typescript-eslint/no-namespace -- Express `Request` augmentation */
 declare global {
   namespace Express {
     interface Request {
@@ -12,6 +12,7 @@ declare global {
     }
   }
 }
+/* eslint-enable @typescript-eslint/no-namespace */
 
 const authService = new AuthService();
 const authRepository = new AuthRepository();
@@ -88,7 +89,7 @@ export async function optionalAuth(
     }
 
     next();
-  } catch (error) {
+  } catch {
     // Don't fail on optional auth, just continue without user
     next();
   }

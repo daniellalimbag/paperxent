@@ -5,7 +5,7 @@ import type { ApiSuccessResponse } from '../../shared/http/api-response.js';
 import { validateRequest } from '../../shared/http/validate-request.js';
 import { verifyToken } from '../auth/auth.middleware.js';
 import type { PaginatedResponse, TransactionHistoryItem } from '@paperxent/shared-types';
-import { TransactionsService } from './transactions.service.js';
+import { TransactionsService, type ListTransactionsParams } from './transactions.service.js';
 
 const listTransactionsSchema = z.object({
   params: z.object({
@@ -34,16 +34,19 @@ transactionsRouter.get(
     const q = listTransactionsSchema.shape.query.parse(req.query);
     const limit = q.limit ?? 20;
 
-    const page: PaginatedResponse<TransactionHistoryItem> = await transactionsService.listTransactions({
+    const listParams: ListTransactionsParams = {
       requesterUserId: req.user!.userId,
       pathUserId: userId,
-      cursor: q.cursor,
       limit,
-      type: q.type,
-      ticker: q.ticker && q.ticker.length > 0 ? q.ticker : undefined,
-      from: q.from,
-      to: q.to,
-    });
+    };
+    if (q.cursor) listParams.cursor = q.cursor;
+    if (q.type) listParams.type = q.type;
+    const ticker = q.ticker?.trim();
+    if (ticker) listParams.ticker = ticker;
+    if (q.from) listParams.from = q.from;
+    if (q.to) listParams.to = q.to;
+
+    const page: PaginatedResponse<TransactionHistoryItem> = await transactionsService.listTransactions(listParams);
 
     const response: ApiSuccessResponse<PaginatedResponse<TransactionHistoryItem>> = {
       data: page,

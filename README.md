@@ -26,7 +26,7 @@ packages/
 ```bash
 npm install
 cp .env.example .env
-cp apps/web/.env.example apps/web/.env.local   # optional; defaults already match API port 4000
+cp apps/web/.env.example apps/web/.env.local   # optional; documents NEXT_PUBLIC_API_URL and API_INTERNAL_URL
 npm run db:generate
 npm run dev
 ```
@@ -34,6 +34,23 @@ npm run dev
 `npm run dev` starts PostgreSQL, Redis, the API, and the web app.
 
 **Env files:** The API reads the repo-root `.env`. Next.js reads `apps/web/.env.local` (not the root file). If you skip copying `apps/web/.env.example`, the web app still defaults to `http://localhost:4000` for API calls.
+
+### Authentication (web)
+
+- Login and register hit **same-origin** Next Route Handlers (`/api/auth/login`, `/api/auth/register`), which call Express and set **httpOnly** `accessToken` and `refreshToken` cookies.
+- Authenticated JSON calls from the browser go through **`/proxy/...`**, which forwards to Express and injects `Authorization: Bearer <accessToken>` from the cookie (tokens are not readable from client JavaScript).
+- The UI keeps a non-secret **user** snapshot in `localStorage` for display; session validity is enforced by the cookie + `/proxy/api/auth/me` on load.
+- **Production / Docker:** set **`API_INTERNAL_URL`** to a URL the Next.js **server** can reach (for example `http://api:4000` on an internal network). Browsers still use **`NEXT_PUBLIC_API_URL`** for WebSockets and any direct references.
+
+## CI and tests
+
+- **GitHub Actions:** `.github/workflows/ci.yml` runs `prisma migrate deploy`, `npm run test` (API integration smoke), `npm run lint`, and `npm run typecheck` against Postgres and Redis service containers.
+- **Local:** with Postgres and Redis running (`npm run docker:up`) and `.env` configured, run `npm run test` from the repo root.
+
+## Production notes
+
+- See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for environment variables, migrations, and Docker build/run notes (`deploy/Dockerfile.*`, `docker-compose.prod.yml`).
+- Product direction for AI/ML workstreams: **[docs/ROADMAP.md](docs/ROADMAP.md)**.
 
 ## Ports
 

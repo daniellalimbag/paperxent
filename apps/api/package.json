@@ -8,7 +8,9 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "lint": "eslint src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@paperxent/database": "*",
@@ -33,7 +35,10 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.14.10",
     "@types/node-cron": "^3.0.11",
+    "@types/supertest": "^7.2.0",
     "@types/ws": "^8.5.13",
-    "tsx": "^4.16.2"
+    "supertest": "^7.2.2",
+    "tsx": "^4.16.2",
+    "vitest": "^4.1.8"
   }
 }

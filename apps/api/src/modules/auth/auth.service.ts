@@ -6,7 +6,6 @@ import type { AuthPayload, TokenPair, JwtPayload } from './auth.types.js';
 
 const SALT_ROUNDS = 10;
 const ACCESS_TOKEN_EXPIRY = '15m';
-const REFRESH_TOKEN_EXPIRY = '7d';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 export class AuthService {
@@ -56,7 +55,7 @@ export class AuthService {
   verifyAccessToken(token: string): JwtPayload {
     try {
       return jwt.verify(token, JWT_SECRET) as JwtPayload;
-    } catch (error) {
+    } catch {
       throw new AppError({
         code: 'UNAUTHORIZED',
         message: 'Invalid or expired token',

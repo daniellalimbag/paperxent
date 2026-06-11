@@ -6,7 +6,6 @@ import type {
   AuthResponse,
   RegisterInput,
   LoginInput,
-  RefreshTokenInput,
   PaginatedResponse,
   TransactionHistoryItem,
   TradeSide,
@@ -15,28 +14,18 @@ import type {
 } from '@paperxent/shared-types';
 
 import { getPublicApiUrl } from '@/lib/public-env';
+import { getUpstreamApiUrl } from '@/lib/upstream-api';
 
-const API_BASE_URL = getPublicApiUrl();
+const PROXY_PREFIX = '/proxy';
 
-/** Cookie name must match apps/web/src/middleware.ts */
-const ACCESS_TOKEN_COOKIE = 'accessToken';
-const SESSION_MAX_AGE_SEC = 60 * 60 * 24 * 7; // 7 days; aligns with typical refresh window
-
-function persistAuthSession(response: AuthResponse): void {
+function persistUser(user: AuthResponse['user']): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('accessToken', response.tokens.accessToken);
-  localStorage.setItem('refreshToken', response.tokens.refreshToken);
-  localStorage.setItem('user', JSON.stringify(response.user));
-  // Mirror for Next.js middleware (same XSS profile as localStorage; prefer httpOnly API route later)
-  document.cookie = `${ACCESS_TOKEN_COOKIE}=${response.tokens.accessToken}; Path=/; Max-Age=${SESSION_MAX_AGE_SEC}; SameSite=Lax`;
+  localStorage.setItem('user', JSON.stringify(user));
 }
 
-function clearAuthSession(): void {
+function clearUserFromStorage(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
   localStorage.removeItem('user');
-  document.cookie = `${ACCESS_TOKEN_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
 }
 
 class ApiError extends Error {
@@ -66,39 +55,47 @@ function messageFromErrorBody(body: unknown): { message: string; code?: string }
     const msg = (err as { message?: unknown }).message;
     if (typeof msg === 'string') {
       const code = (err as { code?: unknown }).code;
-      return {
-        message: msg,
-        code: typeof code === 'string' ? code : undefined,
-      };
+      const out: { message: string; code?: string } = { message: msg };
+      if (typeof code === 'string') {
+        out.code = code;
+      }
+      return out;
     }
   }
   return { message: 'Request failed' };
 }
 
-async function request<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+function resolveRequestUrl(endpoint: string): string {
+  if (typeof window !== 'undefined') {
+    return `${PROXY_PREFIX}${endpoint}`;
+  }
+  return `${getUpstreamApiUrl()}${endpoint}`;
+}
+
+async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const url = resolveRequestUrl(endpoint);
+  const isBrowser = typeof window !== 'undefined';
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   let response: Response;
   try {
-    response = await fetch(url, {
+    const fetchInit: RequestInit = {
       ...options,
       headers,
-    });
+    };
+    if (isBrowser) {
+      fetchInit.credentials = 'include';
+    }
+    response = await fetch(url, fetchInit);
   } catch (e) {
-    const hint = `Cannot reach API at ${API_BASE_URL}. Docker Compose here only runs Postgres and Redis — the Express app must run on your machine (port 4000), e.g. run "npm run dev" from the repo root or "npm run dev -w @paperxent/api". If the API is elsewhere, set NEXT_PUBLIC_API_URL in apps/web/.env.local.`;
+    const publicUrl = getPublicApiUrl();
+    const hint = isBrowser
+      ? `Cannot reach the app API proxy at ${PROXY_PREFIX}. Ensure the Next.js dev server is running. The server proxies to ${getUpstreamApiUrl()} (set API_INTERNAL_URL in production).`
+      : `Cannot reach API at ${getUpstreamApiUrl()} (server-side request). Set API_INTERNAL_URL or NEXT_PUBLIC_API_URL. Public browser URL is ${publicUrl}.`;
     const message = e instanceof TypeError ? hint : e instanceof Error ? e.message : 'Network error';
     throw new ApiError(message, 0, 'NETWORK');
   }
@@ -112,85 +109,93 @@ async function request<T>(
   return response.json() as Promise<T>;
 }
 
-// Auth API
+// Auth API (httpOnly cookies via Next Route Handlers; user snapshot in localStorage for UI)
 export const authApi = {
-  async register(input: RegisterInput): Promise<AuthResponse> {
-    const response = await request<AuthResponse>('/api/auth/register', {
+  async register(input: RegisterInput): Promise<{ user: AuthResponse['user'] }> {
+    const res = await fetch('/api/auth/register', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(input),
     });
+    const data = (await res.json().catch(() => ({}))) as { user?: AuthResponse['user'] };
+    if (!res.ok) {
+      const { message, code } = messageFromErrorBody(data);
+      throw new ApiError(message, res.status, code);
+    }
+    if (!data.user) {
+      throw new ApiError('Invalid register response', res.status);
+    }
     try {
-      persistAuthSession(response);
+      persistUser(data.user);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
       throw new ApiError(
-        `Could not save session in the browser (${msg}). Check that cookies and storage are allowed for this site.`,
+        `Could not save session in the browser (${msg}). Check that storage is allowed for this site.`,
         0,
         'SESSION_PERSIST'
       );
     }
-    return response;
+    return { user: data.user };
   },
 
-  async login(input: LoginInput): Promise<AuthResponse> {
-    const response = await request<AuthResponse>('/api/auth/login', {
+  async login(input: LoginInput): Promise<{ user: AuthResponse['user'] }> {
+    const res = await fetch('/api/auth/login', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(input),
     });
+    const data = (await res.json().catch(() => ({}))) as { user?: AuthResponse['user'] };
+    if (!res.ok) {
+      const { message, code } = messageFromErrorBody(data);
+      throw new ApiError(message, res.status, code);
+    }
+    if (!data.user) {
+      throw new ApiError('Invalid login response', res.status);
+    }
     try {
-      persistAuthSession(response);
+      persistUser(data.user);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unknown error';
       throw new ApiError(
-        `Could not save session in the browser (${msg}). Check that cookies and storage are allowed for this site.`,
+        `Could not save session in the browser (${msg}). Check that storage is allowed for this site.`,
         0,
         'SESSION_PERSIST'
       );
     }
-    return response;
+    return { user: data.user };
   },
 
-  async refresh(input: RefreshTokenInput): Promise<AuthResponse> {
-    const response = await request<AuthResponse>('/api/auth/refresh', {
+  async refresh(): Promise<{ user: AuthResponse['user'] }> {
+    const res = await fetch('/api/auth/refresh', {
       method: 'POST',
-      body: JSON.stringify(input),
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
     });
-    try {
-      persistAuthSession(response);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Unknown error';
-      throw new ApiError(
-        `Could not save session in the browser (${msg}). Check that cookies and storage are allowed for this site.`,
-        0,
-        'SESSION_PERSIST'
-      );
+    const data = (await res.json().catch(() => ({}))) as { user?: AuthResponse['user'] };
+    if (!res.ok) {
+      const { message, code } = messageFromErrorBody(data);
+      throw new ApiError(message, res.status, code);
     }
-    return response;
+    if (!data.user) {
+      throw new ApiError('Invalid refresh response', res.status);
+    }
+    persistUser(data.user);
+    return { user: data.user };
   },
 
   async logout(): Promise<void> {
-    const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
-
-    if (refreshToken) {
-      try {
-        await request('/api/auth/logout', {
-          method: 'POST',
-          body: JSON.stringify({ refreshToken }),
-        });
-      } catch {
-        // Still clear local session if the API call fails
-      }
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {
+      // Still clear local session if the API call fails
     }
-
-    clearAuthSession();
-  },
-
-  getAccessToken(): string | null {
-    return typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-  },
-
-  getRefreshToken(): string | null {
-    return typeof window !== 'undefined' ? localStorage.getItem('refreshToken') : null;
+    clearUserFromStorage();
   },
 };
 

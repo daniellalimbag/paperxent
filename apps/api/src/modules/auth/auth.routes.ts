@@ -1,11 +1,38 @@
 import { Router } from 'express';
 import { AuthService } from './auth.service.js';
 import { AuthRepository } from './auth.repository.js';
+import { verifyToken } from './auth.middleware.js';
 import type { RegisterInput, LoginInput, RefreshTokenInput, AuthResponse } from './auth.types.js';
 
 const router = Router();
 const authService = new AuthService();
 const authRepository = new AuthRepository();
+
+/**
+ * GET /api/auth/me
+ * Current user (Bearer access token). Used by the web app after httpOnly cookie login.
+ */
+router.get('/me', verifyToken, async (req, res, next) => {
+  try {
+    const user = await authRepository.findById(req.user!.userId);
+    if (!user) {
+      return res.status(401).json({
+        error: 'User not found',
+      });
+    }
+
+    res.status(200).json({
+      user: {
+        id: user.id,
+        email: user.email,
+        balance: user.balance.toString(),
+        createdAt: user.createdAt.toISOString(),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 /**
  * POST /api/auth/register
