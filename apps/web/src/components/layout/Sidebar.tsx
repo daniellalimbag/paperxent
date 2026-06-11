@@ -43,8 +43,10 @@ export function Sidebar() {
   };
 
   return (
-    <aside className={`bg-white border-r border-paper-line min-h-screen transition-all duration-300 relative ${isCollapsed ? 'w-20' : 'w-64'}`}>
-      <div className={`p-6 ${isCollapsed ? 'flex flex-col items-center' : ''}`}>
+    <aside
+      className={`flex h-full min-h-0 shrink-0 flex-col bg-white border-r border-paper-line transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}
+    >
+      <div className={`relative flex min-h-0 flex-1 flex-col p-6 ${isCollapsed ? 'items-center' : ''}`}>
         <div className={`mb-8 ${isCollapsed ? 'flex justify-center' : 'flex items-center justify-between'}`}>
           {!isCollapsed && (
             <div>
@@ -61,7 +63,7 @@ export function Sidebar() {
           </button>
         </div>
 
-        <nav className="space-y-2">
+        <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto pb-32">
           {navItems.map((item) => {
             const active = isActive(pathname, item.href);
             return (

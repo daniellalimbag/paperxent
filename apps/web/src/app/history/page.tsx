@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
-import { transactionsApi, ApiError } from '@/lib/api-client';
+import { transactionsApi, ApiError, type TransactionListParams } from '@/lib/api-client';
 import type { TransactionHistoryItem, TradeSide } from '@paperxent/shared-types';
 import { toast } from 'sonner';
 
@@ -81,16 +81,17 @@ export default function HistoryPage() {
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const listParams = useMemo(
-    () => ({
-      limit: PAGE_SIZE,
-      type: typeFilter === 'ALL' ? undefined : typeFilter,
-      ticker: appliedTicker.trim() || undefined,
-      from: appliedFrom.trim() || undefined,
-      to: appliedTo.trim() || undefined,
-    }),
-    [typeFilter, appliedTicker, appliedFrom, appliedTo],
-  );
+  const listParams = useMemo((): TransactionListParams => {
+    const p: TransactionListParams = { limit: PAGE_SIZE };
+    if (typeFilter !== 'ALL') p.type = typeFilter;
+    const ticker = appliedTicker.trim();
+    if (ticker) p.ticker = ticker;
+    const from = appliedFrom.trim();
+    if (from) p.from = from;
+    const to = appliedTo.trim();
+    if (to) p.to = to;
+    return p;
+  }, [typeFilter, appliedTicker, appliedFrom, appliedTo]);
 
   const fetchFirst = useCallback(async () => {
     if (!user?.id) return;

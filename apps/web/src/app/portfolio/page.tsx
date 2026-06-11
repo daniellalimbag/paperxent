@@ -175,7 +175,7 @@ export default function PortfolioPage() {
                           border: `1px solid ${CHART_THEME.tooltipBorder}`,
                           color: CHART_THEME.fg,
                         }}
-                        formatter={(value: number) => [fmtUsd(value), 'Total']}
+                        formatter={(value) => [fmtUsd(Number(value ?? 0)), 'Total']}
                         labelFormatter={(_, payload) => {
                           const row = payload?.[0]?.payload as { date?: string; isLive?: boolean } | undefined;
                           if (!row?.date) return '';
@@ -206,12 +206,12 @@ export default function PortfolioPage() {
                             innerRadius={60}
                             outerRadius={100}
                             paddingAngle={2}
-                            label={(props: { name: string; percent: number }) =>
-                              `${props.name} (${(props.percent * 100).toFixed(0)}%)`
+                            label={(props) =>
+                              `${props.name ?? ''} (${((props.percent ?? 0) * 100).toFixed(0)}%)`
                             }
                           >
                             {pieData.map((_, i) => (
-                              <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                              <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length] ?? '#7c8b6f'} />
                             ))}
                           </Pie>
                           <Tooltip
@@ -220,8 +220,8 @@ export default function PortfolioPage() {
                               border: `1px solid ${CHART_THEME.tooltipBorder}`,
                               color: CHART_THEME.fg,
                             }}
-                            formatter={(value: number, _n, item) => [
-                              fmtUsd(value),
+                            formatter={(value, _n, item) => [
+                              fmtUsd(Number(value ?? 0)),
                               `${(item.payload as { percent?: number }).percent?.toFixed(1) ?? ''}% of portfolio`,
                             ]}
                           />
@@ -266,9 +266,10 @@ export default function PortfolioPage() {
                               border: `1px solid ${CHART_THEME.tooltipBorder}`,
                               color: CHART_THEME.fg,
                             }}
-                            formatter={(value: number, _name, item) => {
+                            formatter={(value, _name, item) => {
+                              const num = Number(value ?? 0);
                               const pnl = (item.payload as { pnl?: number }).pnl;
-                              return [`${value.toFixed(2)}%`, pnl !== undefined ? `P&L ${fmtUsd(pnl)}` : 'ROI'];
+                              return [`${num.toFixed(2)}%`, pnl !== undefined ? `P&L ${fmtUsd(pnl)}` : 'ROI'];
                             }}
                           />
                           <Bar dataKey="roiPct" radius={[4, 4, 0, 0]}>

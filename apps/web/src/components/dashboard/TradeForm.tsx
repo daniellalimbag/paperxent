@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Card, CardHeader, CardContent } from '../ui/Card';
-import { Button } from '../ui/Button';
 import { toast } from 'sonner';
 import { tradeApi, ApiError } from '@/lib/api-client';
 import type { TradeSide } from '@paperxent/shared-types';
@@ -24,7 +23,7 @@ export function TradeForm() {
 
     try {
       setLoading(true);
-      const result = await tradeApi.executeTrade({
+      await tradeApi.executeTrade({
         ticker: ticker.toUpperCase(),
         quantity,
         price,
@@ -65,7 +64,7 @@ export function TradeForm() {
               value={ticker}
               onChange={(e) => setTicker(e.target.value)}
               placeholder="e.g., AAPL"
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-paper-ink placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sage-500"
+              className="w-full px-3 py-2 bg-paper-50 border border-paper-line rounded-md text-paper-ink placeholder:text-paper-muted/70 focus:outline-none focus:ring-2 focus:ring-sage-500/35 focus:border-sage-500"
               disabled={loading}
             />
           </div>
@@ -81,7 +80,7 @@ export function TradeForm() {
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               placeholder="e.g., 10"
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-paper-ink placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sage-500"
+              className="w-full px-3 py-2 bg-paper-50 border border-paper-line rounded-md text-paper-ink placeholder:text-paper-muted/70 focus:outline-none focus:ring-2 focus:ring-sage-500/35 focus:border-sage-500"
               disabled={loading}
             />
           </div>
@@ -97,7 +96,7 @@ export function TradeForm() {
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="e.g., 150.00"
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-md text-paper-ink placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sage-500"
+              className="w-full px-3 py-2 bg-paper-50 border border-paper-line rounded-md text-paper-ink placeholder:text-paper-muted/70 focus:outline-none focus:ring-2 focus:ring-sage-500/35 focus:border-sage-500"
               disabled={loading}
             />
           </div>
@@ -113,7 +112,7 @@ export function TradeForm() {
                 className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
                   side === 'BUY'
                     ? 'bg-green-600 text-white'
-                    : 'bg-slate-800 text-paper-muted hover:bg-slate-700'
+                    : 'bg-paper-100 text-paper-muted border border-paper-line hover:bg-paper-200'
                 }`}
                 disabled={loading}
               >
@@ -125,7 +124,7 @@ export function TradeForm() {
                 className={`flex-1 py-2 px-4 rounded-md font-medium transition-colors ${
                   side === 'SELL'
                     ? 'bg-red-600 text-white'
-                    : 'bg-slate-800 text-paper-muted hover:bg-slate-700'
+                    : 'bg-paper-100 text-paper-muted border border-paper-line hover:bg-paper-200'
                 }`}
                 disabled={loading}
               >
@@ -138,7 +137,7 @@ export function TradeForm() {
             type="submit"
             className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
               loading
-                ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                ? 'bg-paper-200 text-paper-muted cursor-not-allowed'
                 : 'bg-sage-600 text-white hover:bg-sage-700'
             }`}
             disabled={loading}

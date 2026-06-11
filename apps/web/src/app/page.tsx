@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { HomeAuthActions } from '@/components/home/HomeAuthActions';
 
 export default function HomePage() {
   return (
@@ -12,20 +12,7 @@ export default function HomePage() {
         <p className="text-paper-muted text-lg mb-10 leading-relaxed">
           Paper trading and portfolio analytics — practice strategies without risking capital.
         </p>
-        <div className="flex flex-wrap gap-3 justify-center">
-          <Link
-            href="/login"
-            className="px-6 py-3 bg-sage-600 text-white rounded-md hover:bg-sage-700 transition-colors shadow-sm font-medium"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/register"
-            className="px-6 py-3 bg-white text-paper-ink border border-paper-line rounded-md hover:bg-paper-50 transition-colors font-medium"
-          >
-            Create account
-          </Link>
-        </div>
+        <HomeAuthActions />
       </div>
     </div>
   );
