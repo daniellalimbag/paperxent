@@ -1,6 +1,7 @@
 export type ErrorCode =
   | 'BAD_REQUEST'
   | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
   | 'INSUFFICIENT_FUNDS'
   | 'INSUFFICIENT_HOLDINGS'
   | 'NOT_FOUND'
