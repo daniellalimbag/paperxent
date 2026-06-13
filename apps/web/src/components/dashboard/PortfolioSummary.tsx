@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Skeleton } from '../ui/Skeleton';
@@ -19,26 +19,33 @@ export function PortfolioSummary() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadPortfolio() {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await portfolioApi.getValuation();
-        setPortfolio(data);
-      } catch (err) {
-        if (err instanceof ApiError) {
-          setError(err.message);
-        } else {
-          setError('Failed to load portfolio data');
-        }
-      } finally {
-        setLoading(false);
+  const loadPortfolio = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await portfolioApi.getValuation();
+      setPortfolio(data);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError('Failed to load portfolio data');
       }
+    } finally {
+      setLoading(false);
     }
-
-    void loadPortfolio();
   }, []);
+
+  useEffect(() => {
+    void loadPortfolio();
+
+    const handleTradeExecuted = () => {
+      void loadPortfolio();
+    };
+
+    window.addEventListener('paperxent:trade-executed', handleTradeExecuted);
+    return () => window.removeEventListener('paperxent:trade-executed', handleTradeExecuted);
+  }, [loadPortfolio]);
 
   if (loading) {
     return (

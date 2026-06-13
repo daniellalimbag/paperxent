@@ -218,6 +218,13 @@ export const portfolioApi = {
 
 // Trade API
 export const tradeApi = {
+  async previewTrade(input: Omit<TradePreviewInput, 'userId'>): Promise<TradePreviewResult> {
+    const response = await request<ApiSuccessResponse<TradePreviewResult>>('/api/trade/preview', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    return response.data;
+  },
   async executeTrade(input: Omit<ExecuteTradeInput, 'userId'>): Promise<TradeExecutionResult> {
     const response = await request<ApiSuccessResponse<TradeExecutionResult>>('/api/trade', {
       method: 'POST',

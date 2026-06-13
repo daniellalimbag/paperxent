@@ -26,4 +26,23 @@ export class PortfoliosRepository {
       averageBuyPrice: position.averageBuyPrice.toString(),
     }));
   }
+
+  async findPosition(userId: string, ticker: string): Promise<PortfolioPosition | null> {
+    const position = await this.db.portfolio.findUnique({
+      where: {
+        userId_ticker: {
+          userId,
+          ticker: ticker.trim().toUpperCase(),
+        },
+      },
+    });
+
+    if (!position) return null;
+
+    return {
+      ticker: position.ticker,
+      quantity: position.quantity.toString(),
+      averageBuyPrice: position.averageBuyPrice.toString(),
+    };
+  }
 }

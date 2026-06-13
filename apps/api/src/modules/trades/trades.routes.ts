@@ -11,8 +11,21 @@ const placeTradeSchema = z.object({
   body: z.object({
     side: z.enum(['BUY', 'SELL']),
     ticker: z.string().min(1).max(16),
-    quantity: z.string().min(1),
-    price: z.string().min(1),
+    quantity: z.string().optional(),
+    notional: z.string().optional(),
+  }).refine((data) => (data.quantity || data.notional) && !(data.quantity && data.notional), {
+    message: 'Exactly one of quantity or notional must be provided.',
+  }),
+});
+
+const previewTradeSchema = z.object({
+  body: z.object({
+    side: z.enum(['BUY', 'SELL']),
+    ticker: z.string().min(1).max(16),
+    quantity: z.string().optional(),
+    notional: z.string().optional(),
+  }).refine((data) => (data.quantity || data.notional) && !(data.quantity && data.notional), {
+    message: 'Exactly one of quantity or notional must be provided.',
   }),
 });
 
@@ -21,17 +34,35 @@ const tradesService = new TradesService();
 export const tradesRouter = Router();
 
 tradesRouter.post(
+  '/preview',
+  verifyToken,
+  validateRequest(previewTradeSchema),
+  asyncHandler(async (req, res) => {
+    const { side, ticker, quantity, notional } = previewTradeSchema.shape.body.parse(req.body);
+    const input = {
+      userId: req.user!.userId,
+      side,
+      ticker,
+      quantity,
+      notional,
+    };
+    const preview = await tradesService.previewTrade(input);
+    res.status(200).json({ data: preview });
+  }),
+);
+
+tradesRouter.post(
   '/',
   verifyToken,
   validateRequest(placeTradeSchema),
   asyncHandler(async (req, res) => {
-    const { side, ticker, quantity, price } = placeTradeSchema.shape.body.parse(req.body);
+    const { side, ticker, quantity, notional } = placeTradeSchema.shape.body.parse(req.body);
     const input: ExecuteTradeInput = {
       userId: req.user!.userId,
       side,
       ticker,
       quantity,
-      price,
+      notional,
     };
     const trade = await tradesService.executeTrade(input);
     const response: ApiSuccessResponse<TradeExecutionResult> = { data: trade };

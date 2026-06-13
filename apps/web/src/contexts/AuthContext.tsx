@@ -11,6 +11,7 @@ interface AuthContextType {
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshTokens: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,71 +22,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /** Bumps when login/register/logout runs so a slow initial `/proxy/api/auth/me` cannot clear state after cookies exist. */
   const authSessionGeneration = useRef(0);
 
-  useEffect(() => {
-    const clearUserState = () => {
-      localStorage.removeItem('user');
-      setUser(null);
-    };
-
-    const genAtStart = ++authSessionGeneration.current;
-
-    const tryRestoreUserFromStorage = () => {
-      const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-      if (!userStr) return;
-      try {
-        const parsed = JSON.parse(userStr) as AuthResponse['user'];
-        if (parsed?.id && parsed?.email) {
-          setUser(parsed);
-        }
-      } catch {
-        localStorage.removeItem('user');
+  const checkAuth = async (genAtStart: number) => {
+    try {
+      const res = await fetch('/proxy/api/auth/me', { credentials: 'include' });
+      if (genAtStart !== authSessionGeneration.current) {
+        return;
       }
-    };
-
-    const checkAuth = async () => {
-      try {
-        const res = await fetch('/proxy/api/auth/me', { credentials: 'include' });
+      if (res.ok) {
+        const data = (await res.json()) as { user?: AuthResponse['user'] };
         if (genAtStart !== authSessionGeneration.current) {
           return;
         }
-        if (res.ok) {
-          const data = (await res.json()) as { user?: AuthResponse['user'] };
-          if (genAtStart !== authSessionGeneration.current) {
-            return;
+        if (data.user?.id && data.user?.email) {
+          setUser(data.user);
+          try {
+            localStorage.setItem('user', JSON.stringify(data.user));
+          } catch {
+            // non-fatal
           }
-          if (data.user?.id && data.user?.email) {
-            setUser(data.user);
-            try {
-              localStorage.setItem('user', JSON.stringify(data.user));
-            } catch {
-              // non-fatal
-            }
-          } else {
-            clearUserState();
-          }
-        } else if (res.status === 401) {
-          if (genAtStart !== authSessionGeneration.current) {
-            return;
-          }
-          clearUserState();
         } else {
-          // 502/503/etc.: do not wipe local session; middleware may still see a cookie.
-          if (genAtStart !== authSessionGeneration.current) {
-            return;
-          }
-          tryRestoreUserFromStorage();
+          localStorage.removeItem('user');
+          setUser(null);
         }
-      } catch (error) {
-        console.error('Auth check failed:', error);
+      } else if (res.status === 401) {
         if (genAtStart !== authSessionGeneration.current) {
           return;
         }
-      } finally {
-        setLoading(false);
+        localStorage.removeItem('user');
+        setUser(null);
+      } else {
+        // 502/503/etc.: do not wipe local session; middleware may still see a cookie.
+        if (genAtStart !== authSessionGeneration.current) {
+          return;
+        }
+        const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+        if (userStr) {
+          try {
+            const parsed = JSON.parse(userStr) as AuthResponse['user'];
+            if (parsed?.id && parsed?.email) {
+              setUser(parsed);
+            }
+          } catch {
+            localStorage.removeItem('user');
+          }
+        }
       }
-    };
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      if (genAtStart !== authSessionGeneration.current) {
+        return;
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    checkAuth();
+  useEffect(() => {
+    const genAtStart = ++authSessionGeneration.current;
+    checkAuth(genAtStart);
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -115,8 +109,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshUser = async () => {
+    const genAtStart = ++authSessionGeneration.current;
+    await checkAuth(genAtStart);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshTokens }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshTokens, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -48,8 +48,37 @@ export interface ExecuteTradeInput {
   userId: string;
   side: TradeSide;
   ticker: string;
-  quantity: string;
-  price: string;
+  /** Exactly one of quantity or notional must be provided */
+  quantity?: string;
+  /** Dollar amount for the trade */
+  notional?: string;
+}
+
+export interface TradePreviewInput {
+  userId: string;
+  side: TradeSide;
+  ticker: string;
+  quantity?: string;
+  notional?: string;
+}
+
+export interface TradePreviewResult {
+  side: TradeSide;
+  ticker: string;
+  quotePrice: string;
+  quoteTimestamp: string;
+  isQuoteStale: boolean;
+  requestedQuantity?: string;
+  requestedNotional?: string;
+  /** Derived quantity (same as requested if quantity-based) */
+  estimatedQuantity: string;
+  /** Derived notional (same as requested if notional-based) */
+  estimatedNotional: string;
+  userBalance: string;
+  currentHoldings: string;
+  insufficientFunds: boolean;
+  insufficientHoldings: boolean;
+  canExecute: boolean;
 }
 
 export interface TradeExecutionResult {
