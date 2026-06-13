@@ -2,6 +2,7 @@ export interface MarketQuote {
   ticker: string;
   price: string;
   timestamp: string;
+  name?: string | undefined;
   /** Present when quote comes from the live price feed / tick payload */
   previousPrice?: string;
   change?: string;
