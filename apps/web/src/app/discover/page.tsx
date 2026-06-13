@@ -3,13 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
-import { TradeForm } from '@/components/dashboard/TradeForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { DiscoverSearch } from '@/components/discover/DiscoverSearch';
 import { TickerStrip } from '@/components/discover/TickerStrip';
 import { MarketFilterChips } from '@/components/discover/MarketFilterChips';
 import { TopMovers } from '@/components/discover/TopMovers';
 import { DiscoverCardGrid } from '@/components/discover/DiscoverCardGrid';
+import { marketApi, type DiscoverData } from '@/lib/api-client';
 
 const EVERYONE_BUYING = [
   { ticker: 'NVDA', name: 'NVIDIA Corp.' },
@@ -29,49 +29,14 @@ const HOT_IPOS = [
   { ticker: 'CART', name: 'Instacart' },
 ];
 
-interface DiscoverQuote {
-  ticker: string;
-}
-
-interface DiscoverPayload {
-  trending: DiscoverQuote[];
-  movers: DiscoverQuote[];
-  ipos: DiscoverQuote[];
-}
-
-function isDiscoverQuoteList(value: unknown): value is DiscoverQuote[] {
-  return (
-    Array.isArray(value) &&
-    value.every(
-      (item) =>
-        typeof item === 'object' &&
-        item !== null &&
-        'ticker' in item &&
-        typeof (item as { ticker: unknown }).ticker === 'string',
-    )
-  );
-}
-
-function parseDiscoverPayload(data: unknown): DiscoverPayload | null {
-  if (typeof data !== 'object' || data === null) {
-    return null;
-  }
-  const o = data as Record<string, unknown>;
-  if (!isDiscoverQuoteList(o.trending) || !isDiscoverQuoteList(o.movers) || !isDiscoverQuoteList(o.ipos)) {
-    return null;
-  }
-  return { trending: o.trending, movers: o.movers, ipos: o.ipos };
-}
-
-function quotesToStockRows(quotes: DiscoverQuote[]): { ticker: string; name: string }[] {
-  return quotes.map((q) => ({ ticker: q.ticker, name: q.ticker }));
+function quotesToStockRows(quotes: { ticker: string; name?: string }[]): { ticker: string; name: string }[] {
+  return quotes.map((q) => ({ ticker: q.ticker, name: q.name || q.ticker }));
 }
 
 export default function DiscoverPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [selectedTicker, setSelectedTicker] = useState('');
-  const [discoverData, setDiscoverData] = useState<DiscoverPayload | null>(null);
+  const [discoverData, setDiscoverData] = useState<DiscoverData | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.replace('/login');
@@ -80,14 +45,8 @@ export default function DiscoverPage() {
   useEffect(() => {
     const fetchDiscoverData = async () => {
       try {
-        const response = await fetch('/proxy/api/market/discover');
-        const json: unknown = await response.json();
-        const rawData =
-          typeof json === 'object' && json !== null && 'data' in json
-            ? (json as { data: unknown }).data
-            : null;
-        const parsed = parseDiscoverPayload(rawData);
-        setDiscoverData(parsed);
+        const data = await marketApi.getDiscover();
+        setDiscoverData(data);
       } catch (error) {
         console.error('Failed to fetch discover data:', error);
         setDiscoverData(null);
@@ -126,7 +85,7 @@ export default function DiscoverPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Main Discovery Area */}
-            <div className="lg:col-span-8 space-y-10">
+            <div className="lg:col-span-12 space-y-10">
               {/* Characteristics / Filters */}
               <section className="space-y-4">
                 <h2 className="text-lg font-semibold text-paper-ink">Characteristics</h2>
@@ -134,7 +93,7 @@ export default function DiscoverPage() {
               </section>
 
               {/* Top Movers */}
-              <TopMovers onSelect={setSelectedTicker} />
+              <TopMovers />
 
               {/* Curated Lists */}
               <DiscoverCardGrid
@@ -145,7 +104,6 @@ export default function DiscoverPage() {
                     ? quotesToStockRows(discoverData.trending)
                     : EVERYONE_BUYING
                 }
-                onSelect={setSelectedTicker}
               />
 
               <DiscoverCardGrid
@@ -154,27 +112,7 @@ export default function DiscoverPage() {
                 stocks={
                   discoverData?.ipos?.length ? quotesToStockRows(discoverData.ipos) : HOT_IPOS
                 }
-                onSelect={setSelectedTicker}
               />
-            </div>
-
-            {/* Side Trading Panel */}
-            <div className="lg:col-span-4">
-              <div className="sticky top-6 space-y-6">
-                <TradeForm initialTicker={selectedTicker} />
-                
-                <div className="bg-paper-50 border border-paper-line rounded-xl p-6 space-y-4">
-                  <h3 className="font-semibold text-paper-ink">Market Status</h3>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-paper-muted">US Markets</span>
-                    <span className="text-green-600 font-medium">Open</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-paper-muted">Next Close</span>
-                    <span className="text-paper-ink font-medium">4:00 PM EST</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
