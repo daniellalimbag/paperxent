@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getUpstreamApiUrl } from '@/lib/upstream-api';
 import { accessTokenCookieOptions, refreshTokenCookieOptions } from '@/lib/auth-cookie-options';
-
-type UpstreamAuthBody = {
-  user?: { id: string; email: string; balance: string; createdAt: string };
-  tokens?: { accessToken: string; refreshToken: string };
-};
+import { fetchUpstreamAuthJson, type UpstreamAuthBody } from '@/lib/upstream-auth-proxy';
 
 export async function POST(req: Request) {
   const upstream = getUpstreamApiUrl().replace(/\/$/, '');
@@ -16,16 +12,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const res = await fetch(`${upstream}/api/auth/login`, {
+  const result = await fetchUpstreamAuthJson<UpstreamAuthBody>(upstream, '/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
 
-  const data = (await res.json().catch(() => ({}))) as UpstreamAuthBody;
-  if (!res.ok) {
-    return NextResponse.json(data, { status: res.status });
+  if (!result.ok) {
+    return result.response;
   }
+
+  const { data } = result;
 
   if (!data.user || !data.tokens?.accessToken || !data.tokens?.refreshToken) {
     return NextResponse.json({ error: 'Invalid upstream auth response' }, { status: 502 });

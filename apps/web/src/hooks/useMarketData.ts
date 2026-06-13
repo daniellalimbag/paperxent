@@ -180,6 +180,37 @@ export function useMarketData(
             if (subscribedRef.current.has(data.ticker)) {
               setPrices((prev) => ({ ...prev, [data.ticker]: update }));
             }
+          } else if (data.type === 'price_ticks' || data.type === 'price_snapshot') {
+            const ticks = data.data || [];
+            const newPrices = { ...pricesRef.current };
+            let hasChanges = false;
+
+            ticks.forEach((tick: any) => {
+              const update: PriceData = {
+                ticker: tick.ticker,
+                price: Number(tick.price),
+                change: Number(tick.change),
+                changePercent: Number(tick.changePercent),
+                timestamp: tick.timestamp ? new Date(tick.timestamp).getTime() : Date.now(),
+              };
+
+              newPrices[tick.ticker] = update;
+              hasChanges = true;
+            });
+
+            if (hasChanges) {
+              pricesRef.current = newPrices;
+              setPrices((prev) => {
+                const next = { ...prev };
+                ticks.forEach((tick: any) => {
+                  const row = newPrices[tick.ticker];
+                  if (row !== undefined && subscribedRef.current.has(tick.ticker)) {
+                    next[tick.ticker] = row;
+                  }
+                });
+                return next;
+              });
+            }
           }
         } catch (err) {
           console.error('[useMarketData] Failed to parse message:', err);

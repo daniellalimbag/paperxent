@@ -45,6 +45,8 @@ export const config = {
     '/dashboard/:path*',
     '/portfolio',
     '/portfolio/:path*',
+    '/discover',
+    '/discover/:path*',
     '/trade',
     '/trade/:path*',
     '/history',
