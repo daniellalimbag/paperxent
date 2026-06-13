@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Badge } from '../ui/Badge';
 
 interface Mover {
   ticker: string;

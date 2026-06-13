@@ -46,6 +46,26 @@ interface UseMarketDataReturn {
 const DEFAULT_RECONNECT_INTERVAL = 1000;
 const DEFAULT_MAX_RECONNECT_INTERVAL = 30_000;
 
+/** Tick shape in `price_ticks` / `price_snapshot` WebSocket payloads from the API */
+interface WsPriceTickMessage {
+  ticker: string;
+  price: string | number;
+  change?: string | number;
+  changePercent?: string | number;
+  timestamp?: string;
+}
+
+function parseWsPriceTicks(raw: unknown): WsPriceTickMessage[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((item): item is WsPriceTickMessage => {
+    if (typeof item !== 'object' || item === null || !('ticker' in item)) {
+      return false;
+    }
+    const row = item as { ticker: unknown };
+    return typeof row.ticker === 'string';
+  });
+}
+
 // Hook
 
 export function useMarketData(
@@ -181,16 +201,16 @@ export function useMarketData(
               setPrices((prev) => ({ ...prev, [data.ticker]: update }));
             }
           } else if (data.type === 'price_ticks' || data.type === 'price_snapshot') {
-            const ticks = data.data || [];
+            const ticks = parseWsPriceTicks(data.data);
             const newPrices = { ...pricesRef.current };
             let hasChanges = false;
 
-            ticks.forEach((tick: any) => {
+            ticks.forEach((tick) => {
               const update: PriceData = {
                 ticker: tick.ticker,
                 price: Number(tick.price),
-                change: Number(tick.change),
-                changePercent: Number(tick.changePercent),
+                change: Number(tick.change ?? 0),
+                changePercent: Number(tick.changePercent ?? 0),
                 timestamp: tick.timestamp ? new Date(tick.timestamp).getTime() : Date.now(),
               };
 
@@ -202,7 +222,7 @@ export function useMarketData(
               pricesRef.current = newPrices;
               setPrices((prev) => {
                 const next = { ...prev };
-                ticks.forEach((tick: any) => {
+                ticks.forEach((tick) => {
                   const row = newPrices[tick.ticker];
                   if (row !== undefined && subscribedRef.current.has(tick.ticker)) {
                     next[tick.ticker] = row;

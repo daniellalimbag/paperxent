@@ -29,12 +29,49 @@ const HOT_IPOS = [
   { ticker: 'CART', name: 'Instacart' },
 ];
 
+interface DiscoverQuote {
+  ticker: string;
+}
+
+interface DiscoverPayload {
+  trending: DiscoverQuote[];
+  movers: DiscoverQuote[];
+  ipos: DiscoverQuote[];
+}
+
+function isDiscoverQuoteList(value: unknown): value is DiscoverQuote[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (item) =>
+        typeof item === 'object' &&
+        item !== null &&
+        'ticker' in item &&
+        typeof (item as { ticker: unknown }).ticker === 'string',
+    )
+  );
+}
+
+function parseDiscoverPayload(data: unknown): DiscoverPayload | null {
+  if (typeof data !== 'object' || data === null) {
+    return null;
+  }
+  const o = data as Record<string, unknown>;
+  if (!isDiscoverQuoteList(o.trending) || !isDiscoverQuoteList(o.movers) || !isDiscoverQuoteList(o.ipos)) {
+    return null;
+  }
+  return { trending: o.trending, movers: o.movers, ipos: o.ipos };
+}
+
+function quotesToStockRows(quotes: DiscoverQuote[]): { ticker: string; name: string }[] {
+  return quotes.map((q) => ({ ticker: q.ticker, name: q.ticker }));
+}
+
 export default function DiscoverPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [selectedTicker, setSelectedTicker] = useState('');
-  const [discoverData, setDiscoverData] = useState<any>(null);
-  const [isDataLoading, setIsDataLoading] = useState(true);
+  const [discoverData, setDiscoverData] = useState<DiscoverPayload | null>(null);
 
   useEffect(() => {
     if (!loading && !user) router.replace('/login');
@@ -44,19 +81,21 @@ export default function DiscoverPage() {
     const fetchDiscoverData = async () => {
       try {
         const response = await fetch('/proxy/api/market/discover');
-        const json = await response.json();
-        if (json.data) {
-          setDiscoverData(json.data);
-        }
+        const json: unknown = await response.json();
+        const rawData =
+          typeof json === 'object' && json !== null && 'data' in json
+            ? (json as { data: unknown }).data
+            : null;
+        const parsed = parseDiscoverPayload(rawData);
+        setDiscoverData(parsed);
       } catch (error) {
         console.error('Failed to fetch discover data:', error);
-      } finally {
-        setIsDataLoading(false);
+        setDiscoverData(null);
       }
     };
 
     if (user) {
-      fetchDiscoverData();
+      void fetchDiscoverData();
     }
   }, [user]);
 
@@ -101,14 +140,20 @@ export default function DiscoverPage() {
               <DiscoverCardGrid
                 title="What everyone is buying 🔥"
                 subtitle="Most bought stocks in PaperXent in the last 7 days."
-                stocks={discoverData?.trending?.map((q: any) => ({ ticker: q.ticker, name: q.ticker })) || EVERYONE_BUYING}
+                stocks={
+                  discoverData?.trending?.length
+                    ? quotesToStockRows(discoverData.trending)
+                    : EVERYONE_BUYING
+                }
                 onSelect={setSelectedTicker}
               />
 
               <DiscoverCardGrid
                 title="Hot IPOs 🚀"
                 subtitle="Recently listed companies making waves."
-                stocks={discoverData?.ipos?.map((q: any) => ({ ticker: q.ticker, name: q.ticker })) || HOT_IPOS}
+                stocks={
+                  discoverData?.ipos?.length ? quotesToStockRows(discoverData.ipos) : HOT_IPOS
+                }
                 onSelect={setSelectedTicker}
               />
             </div>
