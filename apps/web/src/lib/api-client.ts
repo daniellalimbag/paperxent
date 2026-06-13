@@ -261,4 +261,37 @@ export const analyticsApi = {
   },
 };
 
+export interface MarketQuote {
+  ticker: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  timestamp: string;
+  name?: string;
+}
+
+export interface DiscoverData {
+  trending: MarketQuote[];
+  movers: MarketQuote[];
+  ipos: MarketQuote[];
+}
+
+export const marketApi = {
+  async getDiscover(): Promise<DiscoverData> {
+    const response = await request<ApiSuccessResponse<DiscoverData>>('/api/market/discover');
+    return response.data;
+  },
+  async getQuote(ticker: string): Promise<MarketQuote | null> {
+    const response = await request<ApiSuccessResponse<MarketQuote>>(`/api/market/quotes/${ticker}`);
+    return response.data;
+  },
+  async search(q: string): Promise<{ ticker: string; name: string }[]> {
+    const qs = new URLSearchParams({ q });
+    const response = await request<ApiSuccessResponse<{ ticker: string; name: string }[]>>(
+      `/api/market/search?${qs.toString()}`,
+    );
+    return response.data;
+  },
+};
+
 export { ApiError };

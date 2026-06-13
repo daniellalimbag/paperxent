@@ -5,8 +5,15 @@ import { MARKET_METADATA, type MarketMetadata } from './market-metadata.js';
 export class MarketService {
   constructor(private readonly marketRepository = new MarketRepository()) {}
 
-  getQuote(input: GetQuoteInput): Promise<MarketQuote | null> {
-    return this.marketRepository.findQuote(input);
+  async getQuote(input: GetQuoteInput): Promise<MarketQuote | null> {
+    const quote = await this.marketRepository.findQuote(input);
+    if (!quote) return null;
+
+    const metadata = MARKET_METADATA.find((m) => m.ticker === quote.ticker);
+    return {
+      ...quote,
+      name: metadata?.name,
+    };
   }
 
   async getQuotes(tickers: string[]): Promise<MarketQuote[]> {
