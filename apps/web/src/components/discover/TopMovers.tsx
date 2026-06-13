@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 
 interface Mover {
   ticker: string;
@@ -21,11 +22,7 @@ const TOP_MOVERS: Mover[] = [
   { ticker: 'ARM', name: 'Arm', change: 11.27, color: 'bg-sky-400' },
 ];
 
-interface TopMoversProps {
-  onSelect?: (ticker: string) => void;
-}
-
-export function TopMovers({ onSelect }: TopMoversProps) {
+export function TopMovers() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -33,10 +30,10 @@ export function TopMovers({ onSelect }: TopMoversProps) {
       </div>
       <div className="flex overflow-x-auto pb-4 gap-6 no-scrollbar">
         {TOP_MOVERS.map((mover) => (
-          <div 
+          <Link 
             key={mover.ticker} 
+            href={`/discover/${mover.ticker}`}
             className="flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer group"
-            onClick={() => onSelect?.(mover.ticker)}
           >
             <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-sm group-hover:shadow-md transition-shadow ${mover.color}`}>
               {mover.ticker[0]}
@@ -47,7 +44,7 @@ export function TopMovers({ onSelect }: TopMoversProps) {
                 {mover.change >= 0 ? '↑' : '↓'} {mover.change.toFixed(2)}%
               </p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
