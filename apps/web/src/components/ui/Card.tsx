@@ -3,11 +3,27 @@ import React from 'react';
 interface CardProps {
   children: React.ReactNode;
   className?: string;
+  onClick?: () => void;
 }
 
-export function Card({ children, className = '' }: CardProps) {
+export function Card({ children, className = '', onClick }: CardProps) {
   return (
-    <div className={`bg-white rounded-lg border border-paper-line shadow-sm ${className}`}>
+    <div
+      className={`bg-white rounded-lg border border-paper-line shadow-sm ${className}`}
+      onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+    >
       {children}
     </div>
   );

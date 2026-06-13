@@ -1,19 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { toast } from 'sonner';
 import { tradeApi, ApiError } from '@/lib/api-client';
 import type { TradeSide } from '@paperxent/shared-types';
 
-export function TradeForm() {
-  const [ticker, setTicker] = useState('');
+interface TradeFormProps {
+  initialTicker?: string;
+}
+
+export function TradeForm({ initialTicker = '' }: TradeFormProps) {
+  const [ticker, setTicker] = useState(initialTicker);
   const [quantity, setQuantity] = useState('');
   const [price, setPrice] = useState('');
   const [side, setSide] = useState<TradeSide>('BUY');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Update ticker if initialTicker prop changes
+  useEffect(() => {
+    if (initialTicker) {
+      setTicker(initialTicker);
+    }
+  }, [initialTicker]);
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!ticker || !quantity || !price) {

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Briefcase, TrendingUp, FileText, Settings, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Compass, FileText, Settings, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -16,7 +16,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: 'Dashboard', icon: <LayoutDashboard size={20} />, href: '/dashboard' },
   { label: 'Portfolio', icon: <Briefcase size={20} />, href: '/portfolio' },
-  { label: 'Trade', icon: <TrendingUp size={20} />, href: '/trade' },
+  { label: 'Discover', icon: <Compass size={20} />, href: '/discover' },
   { label: 'History', icon: <FileText size={20} />, href: '/history' },
   { label: 'Settings', icon: <Settings size={20} />, href: '/settings' },
 ];
