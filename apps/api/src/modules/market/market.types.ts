@@ -17,3 +17,10 @@ export interface PriceTick extends MarketQuote {
   change: string;
   changePercent: string;
 }
+
+/** Curated sections for GET /api/market/discover */
+export interface DiscoverResponse {
+  trending: MarketQuote[];
+  movers: MarketQuote[];
+  ipos: MarketQuote[];
+}

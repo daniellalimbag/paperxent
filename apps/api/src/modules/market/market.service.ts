@@ -1,6 +1,6 @@
-import type { GetQuoteInput, MarketQuote } from './market.types.js';
+import type { GetQuoteInput, MarketQuote, DiscoverResponse } from './market.types.js';
 import { MarketRepository } from './market.repository.js';
-import { MARKET_METADATA } from './market-metadata.js';
+import { MARKET_METADATA, type MarketMetadata } from './market-metadata.js';
 
 export class MarketService {
   constructor(private readonly marketRepository = new MarketRepository()) {}
@@ -14,19 +14,21 @@ export class MarketService {
     return Array.from(quotesMap.values());
   }
 
-  async searchTickers(query: string): Promise<any[]> {
+  async searchTickers(query: string): Promise<MarketMetadata[]> {
     const q = query.toLowerCase();
     return MARKET_METADATA.filter(
       (m) => m.ticker.toLowerCase().includes(q) || m.name.toLowerCase().includes(q),
     ).slice(0, 10);
   }
 
-  async getDiscoverData(): Promise<any> {
+  async getDiscoverData(): Promise<DiscoverResponse> {
     const allTickers = MARKET_METADATA.map((m) => m.ticker);
     const quotesMap = await this.marketRepository.findQuotes(allTickers);
 
-    const getQuotesForTickers = (tickers: string[]) =>
-      tickers.map((t) => quotesMap.get(t)).filter(Boolean);
+    const getQuotesForTickers = (tickers: string[]): MarketQuote[] =>
+      tickers
+        .map((t) => quotesMap.get(t))
+        .filter((q): q is MarketQuote => q != null);
 
     return {
       trending: getQuotesForTickers(['NVDA', 'TSLA', 'AAPL', 'MSFT', 'META', 'GOOGL']),
