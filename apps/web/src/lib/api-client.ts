@@ -45,9 +45,15 @@ class ApiError extends Error {
  */
 function messageFromErrorBody(body: unknown): { message: string; code?: string } {
   if (typeof body !== 'object' || body === null) {
-    return { message: 'Request failed' };
+    return { message: 'Something went wrong. Try again, or confirm the API server is running.' };
   }
-  const err = (body as Record<string, unknown>).error;
+  const record = body as Record<string, unknown>;
+
+  if (typeof record.message === 'string' && record.message.trim()) {
+    return { message: record.message };
+  }
+
+  const err = record.error;
   if (typeof err === 'string') {
     return { message: err };
   }
@@ -62,7 +68,10 @@ function messageFromErrorBody(body: unknown): { message: string; code?: string }
       return out;
     }
   }
-  return { message: 'Request failed' };
+  return {
+    message:
+      'The server returned an error without details. Check that the PaperXent API is running and that NEXT_PUBLIC_API_URL / API_INTERNAL_URL point to it.',
+  };
 }
 
 function resolveRequestUrl(endpoint: string): string {

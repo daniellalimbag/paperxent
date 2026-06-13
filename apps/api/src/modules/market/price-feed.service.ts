@@ -6,13 +6,26 @@ import type { PriceTickEvent } from '../../shared/events/event.types.js';
 import { MarketRepository } from './market.repository.js';
 import type { PriceTick } from './market.types.js';
 
-const FEED_TICKERS = ['AAPL', 'TSLA', 'MSFT'] as const;
+const FEED_TICKERS = [
+  'AAPL',
+  'TSLA',
+  'MSFT',
+  'NVDA',
+  'GOOGL',
+  'AMZN',
+  'META',
+  'ROKU',
+  'RDDT',
+  'ALAB',
+  'ARM',
+  'KVUE',
+  'BIRK',
+  'CART',
+] as const;
 const ONE_SECOND_MS = 1000;
 
-type FeedTicker = (typeof FEED_TICKERS)[number];
-
 interface PriceState {
-  ticker: FeedTicker;
+  ticker: string;
   price: number;
   anchorPrice: number;
   volatility: number;
@@ -32,7 +45,7 @@ class SeededRandom {
 export class PriceFeedService {
   private readonly wss: WebSocketServer;
   private interval: NodeJS.Timeout | null = null;
-  private readonly prices = new Map<FeedTicker, PriceState>([
+  private readonly prices = new Map<string, PriceState>([
     [
       'AAPL',
       {
@@ -61,6 +74,116 @@ export class PriceFeedService {
         anchorPrice: 425.1,
         volatility: 0.003,
         prng: new SeededRandom(0x45f7),
+      },
+    ],
+    [
+      'NVDA',
+      {
+        ticker: 'NVDA',
+        price: 125.5,
+        anchorPrice: 125.5,
+        volatility: 0.012,
+        prng: new SeededRandom(0x4e56da),
+      },
+    ],
+    [
+      'GOOGL',
+      {
+        ticker: 'GOOGL',
+        price: 175.8,
+        anchorPrice: 175.8,
+        volatility: 0.004,
+        prng: new SeededRandom(0x6006),
+      },
+    ],
+    [
+      'AMZN',
+      {
+        ticker: 'AMZN',
+        price: 185.3,
+        anchorPrice: 185.3,
+        volatility: 0.005,
+        prng: new SeededRandom(0x4d23),
+      },
+    ],
+    [
+      'META',
+      {
+        ticker: 'META',
+        price: 505.2,
+        anchorPrice: 505.2,
+        volatility: 0.006,
+        prng: new SeededRandom(0x3e7a),
+      },
+    ],
+    [
+      'ROKU',
+      {
+        ticker: 'ROKU',
+        price: 65.4,
+        anchorPrice: 65.4,
+        volatility: 0.015,
+        prng: new SeededRandom(0x8090),
+      },
+    ],
+    [
+      'RDDT',
+      {
+        ticker: 'RDDT',
+        price: 55.2,
+        anchorPrice: 55.2,
+        volatility: 0.02,
+        prng: new SeededRandom(0x8edd),
+      },
+    ],
+    [
+      'ALAB',
+      {
+        ticker: 'ALAB',
+        price: 85.7,
+        anchorPrice: 85.7,
+        volatility: 0.018,
+        prng: new SeededRandom(0x41ab),
+      },
+    ],
+    [
+      'ARM',
+      {
+        ticker: 'ARM',
+        price: 155.4,
+        anchorPrice: 155.4,
+        volatility: 0.014,
+        prng: new SeededRandom(0x483),
+      },
+    ],
+    [
+      'KVUE',
+      {
+        ticker: 'KVUE',
+        price: 18.9,
+        anchorPrice: 18.9,
+        volatility: 0.003,
+        prng: new SeededRandom(0x1234),
+      },
+    ],
+    [
+      'BIRK',
+      {
+        ticker: 'BIRK',
+        price: 45.6,
+        anchorPrice: 45.6,
+        volatility: 0.008,
+        prng: new SeededRandom(0x5678),
+      },
+    ],
+    [
+      'CART',
+      {
+        ticker: 'CART',
+        price: 32.4,
+        anchorPrice: 32.4,
+        volatility: 0.012,
+        prng: new SeededRandom(0x9abc),
       },
     ],
   ]);

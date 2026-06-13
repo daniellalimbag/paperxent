@@ -10,9 +10,50 @@ const getQuoteSchema = z.object({
   }),
 });
 
+const searchSchema = z.object({
+  query: z.object({
+    q: z.string().min(1),
+  }),
+});
+
+const batchQuotesSchema = z.object({
+  query: z.object({
+    tickers: z.string().min(1),
+  }),
+});
+
 const marketService = new MarketService();
 
 export const marketRouter = Router();
+
+marketRouter.get(
+  '/discover',
+  asyncHandler(async (req, res) => {
+    const data = await marketService.getDiscoverData();
+    res.json({ data });
+  }),
+);
+
+marketRouter.get(
+  '/search',
+  validateRequest(searchSchema),
+  asyncHandler(async (req, res) => {
+    const { q } = searchSchema.shape.query.parse(req.query);
+    const results = await marketService.searchTickers(q);
+    res.json({ data: results });
+  }),
+);
+
+marketRouter.get(
+  '/quotes',
+  validateRequest(batchQuotesSchema),
+  asyncHandler(async (req, res) => {
+    const { tickers } = batchQuotesSchema.shape.query.parse(req.query);
+    const tickerList = tickers.split(',').map((t) => t.trim());
+    const quotes = await marketService.getQuotes(tickerList);
+    res.json({ data: quotes });
+  }),
+);
 
 marketRouter.get(
   '/quotes/:ticker',
