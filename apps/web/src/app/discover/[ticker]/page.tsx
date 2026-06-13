@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { marketApi, type MarketQuote } from '@/lib/api-client';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { ChevronLeft, TrendingUp, TrendingDown, DollarSign, BarChart3, Briefcase } from 'lucide-react';
+import { ChevronLeft, DollarSign, BarChart3, Briefcase } from 'lucide-react';
 import Link from 'next/link';
 import { TradeModal } from '@/components/discover/TradeModal';
 import { useMarketData } from '@/hooks/useMarketData';
