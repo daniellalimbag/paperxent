@@ -19,7 +19,7 @@ export function TradeModal({ isOpen, onClose, ticker }: TradeModalProps) {
     >
       <div className="space-y-4">
         <p className="text-sm text-paper-muted">
-          Enter the quantity and price to execute your paper trade.
+          Preview your order at the latest server price, then confirm your paper trade.
         </p>
         <TradeForm 
           initialTicker={ticker} 

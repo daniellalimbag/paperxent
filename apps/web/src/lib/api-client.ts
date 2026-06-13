@@ -3,6 +3,8 @@ import type {
   PortfolioValuation,
   ExecuteTradeInput,
   TradeExecutionResult,
+  TradePreviewInput,
+  TradePreviewResult,
   AuthResponse,
   RegisterInput,
   LoginInput,
@@ -270,11 +272,16 @@ export const analyticsApi = {
 
 export interface MarketQuote {
   ticker: string;
-  price: number;
-  change: number;
-  changePercent: number;
+  price: string | number;
+  change?: string | number;
+  changePercent?: string | number;
   timestamp: string;
   name?: string;
+  previousPrice?: string | number;
+  source?: 'live' | 'simulated';
+  open?: string;
+  high?: string;
+  low?: string;
 }
 
 export interface DiscoverData {
@@ -283,14 +290,61 @@ export interface DiscoverData {
   ipos: MarketQuote[];
 }
 
+export interface MarketCandles {
+  ticker: string;
+  resolution: string;
+  bars: {
+    time: string;
+    open: string;
+    high: string;
+    low: string;
+    close: string;
+    volume: string;
+  }[];
+}
+
 export const marketApi = {
+  async getFeatures(): Promise<{ marketstackEnabled: boolean }> {
+    const response = await request<ApiSuccessResponse<{ marketstackEnabled: boolean }>>(
+      '/api/market/features',
+    );
+    return response.data;
+  },
   async getDiscover(): Promise<DiscoverData> {
     const response = await request<ApiSuccessResponse<DiscoverData>>('/api/market/discover');
+    return response.data;
+  },
+  async getQuotesBatch(tickers: string[]): Promise<MarketQuote[]> {
+    if (tickers.length === 0) return [];
+    const qs = new URLSearchParams({ tickers: tickers.join(',') });
+    const response = await request<ApiSuccessResponse<MarketQuote[]>>(
+      `/api/market/quotes?${qs.toString()}`,
+    );
     return response.data;
   },
   async getQuote(ticker: string): Promise<MarketQuote | null> {
     const response = await request<ApiSuccessResponse<MarketQuote>>(`/api/market/quotes/${ticker}`);
     return response.data;
+  },
+  async getCandles(
+    ticker: string,
+    opts?: { resolution?: string; from?: number; to?: number },
+  ): Promise<MarketCandles | null> {
+    const qs = new URLSearchParams();
+    if (opts?.resolution) qs.set('resolution', opts.resolution);
+    if (opts?.from != null) qs.set('from', String(opts.from));
+    if (opts?.to != null) qs.set('to', String(opts.to));
+    const suffix = qs.toString();
+    const path = `/api/market/candles/${encodeURIComponent(ticker)}${suffix ? `?${suffix}` : ''}`;
+    try {
+      const response = await request<ApiSuccessResponse<MarketCandles>>(path);
+      return response.data;
+    } catch (e) {
+      if (e instanceof ApiError && e.statusCode === 503) {
+        return null;
+      }
+      throw e;
+    }
   },
   async search(q: string): Promise<{ ticker: string; name: string }[]> {
     const qs = new URLSearchParams({ q });
@@ -302,3 +356,4 @@ export const marketApi = {
 };
 
 export { ApiError };
+export type { TradePreviewInput, TradePreviewResult } from '@paperxent/shared-types';

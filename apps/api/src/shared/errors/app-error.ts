@@ -6,7 +6,9 @@ export type ErrorCode =
   | 'INSUFFICIENT_HOLDINGS'
   | 'NOT_FOUND'
   | 'VALIDATION_ERROR'
-  | 'INTERNAL_SERVER_ERROR';
+  | 'INTERNAL_SERVER_ERROR'
+  | 'SERVICE_UNAVAILABLE'
+  | 'BAD_GATEWAY';
 
 export class AppError extends Error {
   public readonly code: ErrorCode;

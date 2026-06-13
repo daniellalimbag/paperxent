@@ -31,7 +31,6 @@ describe('API smoke (integration)', () => {
         side: 'BUY',
         ticker: 'AAPL',
         quantity: '1',
-        price: '100',
       })
       .expect(202);
 

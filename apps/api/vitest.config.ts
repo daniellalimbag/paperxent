@@ -20,5 +20,9 @@ export default defineConfig({
     hookTimeout: 60_000,
     setupFiles: ['./test/setup.ts'],
     include: ['test/**/*.integration.test.ts'],
+    /** Integration tests use seeded Redis quotes, not live Marketstack (developers may have the key in root `.env`). */
+    env: {
+      MARKETSTACK_ACCESS_KEY: '',
+    },
   },
 });

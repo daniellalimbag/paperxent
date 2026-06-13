@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { AppError } from '../../shared/errors/app-error.js';
-import { MarketRepository } from '../market/market.repository.js';
+import { MarketService } from '../market/market.service.js';
 import { PortfoliosRepository } from './portfolios.repository.js';
 import type {
   AssetValuation,
@@ -13,7 +13,7 @@ import type {
 export class PortfoliosService {
   constructor(
     private readonly portfoliosRepository = new PortfoliosRepository(),
-    private readonly marketRepository = new MarketRepository(),
+    private readonly marketService = new MarketService(),
   ) {}
 
   getPortfolio(input: GetPortfolioInput): Promise<PortfolioPosition[]> {
@@ -35,13 +35,11 @@ export class PortfoliosService {
       };
     }
 
-    const quotesByTicker = await this.marketRepository.findQuotes(
-      holdings.map((holding) => holding.ticker),
-    );
+    const tickers = holdings.map((holding) => holding.ticker);
+    const quotesList = await this.marketService.getQuotes(tickers);
+    const quotesByTicker = new Map(quotesList.map((q) => [q.ticker, q]));
 
-    const missingTickers = holdings
-      .map((holding) => holding.ticker)
-      .filter((ticker) => !quotesByTicker.has(ticker));
+    const missingTickers = tickers.filter((ticker) => !quotesByTicker.has(ticker));
 
     if (missingTickers.length > 0) {
       throw new AppError({

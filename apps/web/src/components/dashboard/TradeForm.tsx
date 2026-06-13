@@ -57,8 +57,7 @@ export function TradeForm({
       const result = await tradeApi.previewTrade({
         side,
         ticker: ticker.toUpperCase(),
-        quantity: orderMode === 'SHARES' ? amount : undefined,
-        notional: orderMode === 'DOLLARS' ? amount : undefined,
+        ...(orderMode === 'SHARES' ? { quantity: amount } : { notional: amount }),
       });
       setPreview(result);
     } catch (err) {
@@ -80,8 +79,7 @@ export function TradeForm({
       await tradeApi.executeTrade({
         side,
         ticker: ticker.toUpperCase(),
-        quantity: orderMode === 'SHARES' ? amount : undefined,
-        notional: orderMode === 'DOLLARS' ? amount : undefined,
+        ...(orderMode === 'SHARES' ? { quantity: amount } : { notional: amount }),
       });
 
       const action = side === 'BUY' ? 'bought' : 'sold';

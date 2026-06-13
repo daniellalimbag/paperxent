@@ -5,7 +5,7 @@ import type { ApiSuccessResponse } from '../../shared/http/api-response.js';
 import { validateRequest } from '../../shared/http/validate-request.js';
 import { verifyToken } from '../auth/auth.middleware.js';
 import { TradesService } from './trades.service.js';
-import type { ExecuteTradeInput, TradeExecutionResult } from './trades.types.js';
+import type { ExecuteTradeInput, TradeExecutionResult, TradePreviewInput } from './trades.types.js';
 
 const placeTradeSchema = z.object({
   body: z.object({
@@ -39,12 +39,12 @@ tradesRouter.post(
   validateRequest(previewTradeSchema),
   asyncHandler(async (req, res) => {
     const { side, ticker, quantity, notional } = previewTradeSchema.shape.body.parse(req.body);
-    const input = {
+    const input: TradePreviewInput = {
       userId: req.user!.userId,
       side,
       ticker,
-      quantity,
-      notional,
+      ...(quantity !== undefined ? { quantity } : {}),
+      ...(notional !== undefined ? { notional } : {}),
     };
     const preview = await tradesService.previewTrade(input);
     res.status(200).json({ data: preview });
@@ -61,8 +61,8 @@ tradesRouter.post(
       userId: req.user!.userId,
       side,
       ticker,
-      quantity,
-      notional,
+      ...(quantity !== undefined ? { quantity } : {}),
+      ...(notional !== undefined ? { notional } : {}),
     };
     const trade = await tradesService.executeTrade(input);
     const response: ApiSuccessResponse<TradeExecutionResult> = { data: trade };

@@ -1,20 +1,17 @@
 'use client';
 
-import { useEffect } from 'react';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Activity } from 'lucide-react';
 import { Skeleton } from '../ui/Skeleton';
-import { useMarketData } from '@/hooks/useMarketData';
+import { useLiveMarketTickerRows } from '@/hooks/useLiveMarketTickerRows';
 
-const TICKERS = ['AAPL', 'TSLA', 'MSFT'];
+const TICKERS = ['AAPL', 'TSLA', 'MSFT'] as const;
 
 export function LivePrices() {
-  const { prices, isConnected, subscribe } = useMarketData();
+  const { row, wsConnected, mode } = useLiveMarketTickerRows(TICKERS);
 
-  useEffect(() => {
-    subscribe(TICKERS);
-  }, [subscribe]);
+  const headerLive = mode === 'live' ? true : wsConnected;
 
   return (
     <Card>
@@ -22,9 +19,15 @@ export function LivePrices() {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-paper-ink">Live Market Prices</h2>
           <div className="flex items-center gap-2">
-            <Activity size={16} className={isConnected ? 'text-green-500' : 'text-slate-500'} />
+            <Activity size={16} className={headerLive ? 'text-green-500' : 'text-slate-500'} />
             <span className="text-xs text-paper-muted">
-              {isConnected ? 'Live' : 'Connecting...'}
+              {mode === 'loading'
+                ? 'Loading…'
+                : mode === 'live'
+                  ? 'Marketstack (refreshed periodically)'
+                  : wsConnected
+                    ? 'Simulated feed'
+                    : 'Connecting...'}
             </span>
           </div>
         </div>
@@ -32,9 +35,9 @@ export function LivePrices() {
       <CardContent>
         <div className="space-y-3">
           {TICKERS.map((ticker) => {
-            const priceData = prices[ticker];
+            const r = row(ticker);
 
-            if (!priceData) {
+            if (r.price == null) {
               return (
                 <div key={ticker} className="flex items-center justify-between p-3 rounded-lg">
                   <div className="flex-1">
@@ -46,32 +49,37 @@ export function LivePrices() {
               );
             }
 
-            const change = priceData.change;
-            const changePercent = priceData.changePercent;
+            const change = r.change ?? 0;
+            const changePercentFrac = r.changePercent ?? 0;
+            const pctLabel = (changePercentFrac * 100).toFixed(2);
 
             return (
-              <div key={ticker} className="flex items-center justify-between p-3 rounded-lg hover:bg-paper-50 transition-colors">
+              <div
+                key={ticker}
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-paper-50 transition-colors"
+              >
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-paper-ink">{ticker}</span>
                   </div>
                   <p className="text-xs text-paper-muted mt-1">
-                    Last updated: {new Date(priceData.timestamp).toLocaleTimeString()}
+                    Last updated:{' '}
+                    {r.timestampMs != null
+                      ? new Date(r.timestampMs).toLocaleTimeString()
+                      : '—'}
                   </p>
                 </div>
 
                 <div className="text-right">
-                  <p className="text-lg font-semibold text-paper-ink">
-                    ${priceData.price.toFixed(2)}
-                  </p>
+                  <p className="text-lg font-semibold text-paper-ink">${r.price.toFixed(2)}</p>
                   <div className="flex items-center justify-end gap-1">
                     {change >= 0 ? (
                       <Badge variant="success">
-                        +{change.toFixed(2)} (+{changePercent.toFixed(2)}%)
+                        +{change.toFixed(2)} (+{pctLabel}%)
                       </Badge>
                     ) : (
                       <Badge variant="danger">
-                        {change.toFixed(2)} ({changePercent.toFixed(2)}%)
+                        {change.toFixed(2)} ({pctLabel}%)
                       </Badge>
                     )}
                   </div>
