@@ -100,6 +100,23 @@ export default function StockDetailPage({ params }: { params: Promise<{ ticker: 
     };
   }, [user?.id, quote, ticker]);
 
+  const toggleWatchlist = useCallback(async () => {
+    if (onWatchlist == null) return;
+    try {
+      if (onWatchlist) {
+        await watchlistApi.remove(ticker);
+        setOnWatchlist(false);
+        toast.success(`Removed ${ticker} from your watchlist`);
+      } else {
+        await watchlistApi.add(ticker);
+        setOnWatchlist(true);
+        toast.success(`Added ${ticker} to your watchlist`);
+      }
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : 'Could not update watchlist');
+    }
+  }, [onWatchlist, ticker]);
+
   if (authLoading || !user || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-paper-100">
@@ -126,23 +143,6 @@ export default function StockDetailPage({ params }: { params: Promise<{ ticker: 
   const dayOpen = quote.open != null ? num(quote.open) : null;
   const dayHigh = quote.high != null ? num(quote.high) : null;
   const dayLow = quote.low != null ? num(quote.low) : null;
-
-  const toggleWatchlist = useCallback(async () => {
-    if (onWatchlist == null) return;
-    try {
-      if (onWatchlist) {
-        await watchlistApi.remove(ticker);
-        setOnWatchlist(false);
-        toast.success(`Removed ${ticker} from your watchlist`);
-      } else {
-        await watchlistApi.add(ticker);
-        setOnWatchlist(true);
-        toast.success(`Added ${ticker} to your watchlist`);
-      }
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : 'Could not update watchlist');
-    }
-  }, [onWatchlist, ticker]);
 
   return (
     <div className="flex min-h-screen bg-paper-100">
