@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   PieChart,
@@ -18,6 +16,7 @@ import {
   Legend,
   Area,
   AreaChart,
+  Line,
 } from 'recharts';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
