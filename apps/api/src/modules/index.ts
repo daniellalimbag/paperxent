@@ -6,6 +6,7 @@ import { tradesRouter } from './trades/trades.routes.js';
 import { transactionsRouter } from './transactions/transactions.routes.js';
 import { usersRouter } from './users/users.routes.js';
 import { analyticsRouter } from './analytics/analytics.routes.js';
+import { watchlistRouter } from './watchlist/watchlist.routes.js';
 
 export const apiRouter = Router();
 
@@ -16,3 +17,4 @@ apiRouter.use('/transactions', transactionsRouter);
 apiRouter.use('/analytics', analyticsRouter);
 apiRouter.use('/portfolio', portfoliosRouter);
 apiRouter.use('/market', marketRouter);
+apiRouter.use('/watchlist', watchlistRouter);

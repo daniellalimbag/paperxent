@@ -20,6 +20,8 @@ export default defineConfig({
     hookTimeout: 60_000,
     setupFiles: ['./test/setup.ts'],
     include: ['test/**/*.integration.test.ts'],
+    /** Avoid Prisma write conflicts when multiple integration files hit the same DB concurrently. */
+    fileParallelism: false,
     /** Integration tests use seeded Redis quotes, not live Marketstack (developers may have the key in root `.env`). */
     env: {
       MARKETSTACK_ACCESS_KEY: '',

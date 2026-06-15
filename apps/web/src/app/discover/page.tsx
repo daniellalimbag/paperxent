@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,7 +9,11 @@ import { TickerStrip } from '@/components/discover/TickerStrip';
 import { MarketFilterChips } from '@/components/discover/MarketFilterChips';
 import { TopMovers } from '@/components/discover/TopMovers';
 import { DiscoverCardGrid } from '@/components/discover/DiscoverCardGrid';
-import { marketApi, type DiscoverData } from '@/lib/api-client';
+import { WatchlistPanel } from '@/components/discover/WatchlistPanel';
+import { marketApi, watchlistApi, ApiError } from '@/lib/api-client';
+import type { DiscoverData } from '@/lib/api-client';
+import type { WatchlistItem } from '@paperxent/shared-types';
+import { toast } from 'sonner';
 
 const EVERYONE_BUYING = [
   { ticker: 'NVDA', name: 'NVIDIA Corp.' },
@@ -37,10 +41,24 @@ export default function DiscoverPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [discoverData, setDiscoverData] = useState<DiscoverData | null>(null);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+  const [watchlistLoading, setWatchlistLoading] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) router.replace('/login');
   }, [loading, user, router]);
+
+  const loadWatchlist = useCallback(async () => {
+    setWatchlistLoading(true);
+    try {
+      const rows = await watchlistApi.list();
+      setWatchlist(rows);
+    } catch {
+      setWatchlist([]);
+    } finally {
+      setWatchlistLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchDiscoverData = async () => {
@@ -55,8 +73,45 @@ export default function DiscoverPage() {
 
     if (user) {
       void fetchDiscoverData();
+      void loadWatchlist();
     }
-  }, [user]);
+  }, [user, loadWatchlist]);
+
+  const watchedSet = useMemo(
+    () => new Set(watchlist.map((w) => w.ticker.toUpperCase())),
+    [watchlist],
+  );
+
+  const handleWatchToggle = async (ticker: string, isWatched: boolean) => {
+    try {
+      if (isWatched) {
+        await watchlistApi.remove(ticker);
+        setWatchlist((prev) => prev.filter((i) => i.ticker.toUpperCase() !== ticker.toUpperCase()));
+        toast.success(`Removed ${ticker} from watchlist`);
+      } else {
+        const row = await watchlistApi.add(ticker);
+        setWatchlist((prev) => {
+          const rest = prev.filter((i) => i.ticker.toUpperCase() !== row.ticker.toUpperCase());
+          return [row, ...rest];
+        });
+        toast.success(`Added ${ticker} to watchlist`);
+      }
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : 'Watchlist update failed';
+      toast.error(msg);
+    }
+  };
+
+  const handleWatchRemove = async (ticker: string) => {
+    try {
+      await watchlistApi.remove(ticker);
+      setWatchlist((prev) => prev.filter((i) => i.ticker.toUpperCase() !== ticker.toUpperCase()));
+      toast.success(`Removed ${ticker}`);
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : 'Could not remove ticker';
+      toast.error(msg);
+    }
+  };
 
   if (loading || !user) {
     return (
@@ -84,8 +139,13 @@ export default function DiscoverPage() {
           <TickerStrip />
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Main Discovery Area */}
             <div className="lg:col-span-12 space-y-10">
+              <WatchlistPanel
+                items={watchlist}
+                loading={watchlistLoading}
+                onRemove={handleWatchRemove}
+              />
+
               {/* Characteristics / Filters */}
               <section className="space-y-4">
                 <h2 className="text-lg font-semibold text-paper-ink">Characteristics</h2>
@@ -104,6 +164,8 @@ export default function DiscoverPage() {
                     ? quotesToStockRows(discoverData.trending)
                     : EVERYONE_BUYING
                 }
+                watchedTickers={watchedSet}
+                onWatchToggle={handleWatchToggle}
               />
 
               <DiscoverCardGrid
@@ -112,6 +174,8 @@ export default function DiscoverPage() {
                 stocks={
                   discoverData?.ipos?.length ? quotesToStockRows(discoverData.ipos) : HOT_IPOS
                 }
+                watchedTickers={watchedSet}
+                onWatchToggle={handleWatchToggle}
               />
             </div>
           </div>

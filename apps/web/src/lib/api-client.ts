@@ -13,6 +13,7 @@ import type {
   TradeSide,
   AnalyticsRange,
   PortfolioAnalyticsPayload,
+  WatchlistItem,
 } from '@paperxent/shared-types';
 
 import { getPublicApiUrl } from '@/lib/public-env';
@@ -117,7 +118,15 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     throw new ApiError(message, response.status, code);
   }
 
-  return response.json() as Promise<T>;
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const text = await response.text();
+  if (!text.trim()) {
+    return undefined as T;
+  }
+  return JSON.parse(text) as T;
 }
 
 // Auth API (httpOnly cookies via Next Route Handlers; user snapshot in localStorage for UI)
@@ -352,6 +361,25 @@ export const marketApi = {
       `/api/market/search?${qs.toString()}`,
     );
     return response.data;
+  },
+};
+
+export const watchlistApi = {
+  async list(): Promise<WatchlistItem[]> {
+    const response = await request<ApiSuccessResponse<WatchlistItem[]>>('/api/watchlist');
+    return response.data;
+  },
+  async add(ticker: string): Promise<WatchlistItem> {
+    const response = await request<ApiSuccessResponse<WatchlistItem>>('/api/watchlist', {
+      method: 'POST',
+      body: JSON.stringify({ ticker }),
+    });
+    return response.data;
+  },
+  async remove(ticker: string): Promise<void> {
+    await request<void>(`/api/watchlist/${encodeURIComponent(ticker)}`, {
+      method: 'DELETE',
+    });
   },
 };
 

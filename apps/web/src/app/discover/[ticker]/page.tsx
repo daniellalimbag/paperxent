@@ -4,14 +4,15 @@ import { useEffect, useState, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
-import { marketApi, portfolioApi, type MarketQuote } from '@/lib/api-client';
+import { marketApi, portfolioApi, watchlistApi, ApiError, type MarketQuote } from '@/lib/api-client';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { ChevronLeft, DollarSign, Briefcase } from 'lucide-react';
+import { ChevronLeft, DollarSign, Briefcase, Star } from 'lucide-react';
 import Link from 'next/link';
 import { TradeModal } from '@/components/discover/TradeModal';
 import { StockPriceChart } from '@/components/discover/StockPriceChart';
 import type { PortfolioValuation } from '@paperxent/shared-types';
+import { toast } from 'sonner';
 
 function num(v: unknown, fallback = 0): number {
   if (typeof v === 'number' && Number.isFinite(v)) return v;
@@ -31,6 +32,7 @@ export default function StockDetailPage({ params }: { params: Promise<{ ticker: 
   const [loading, setLoading] = useState(true);
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [holdingsQty, setHoldingsQty] = useState<string | null>(null);
+  const [onWatchlist, setOnWatchlist] = useState<boolean | null>(null);
 
   const loadQuote = useCallback(async () => {
     try {
@@ -53,6 +55,23 @@ export default function StockDetailPage({ params }: { params: Promise<{ ticker: 
       void loadQuote();
     }
   }, [user, loadQuote]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    void watchlistApi
+      .list()
+      .then((rows) => {
+        if (cancelled) return;
+        setOnWatchlist(rows.some((r) => r.ticker.toUpperCase() === ticker));
+      })
+      .catch(() => {
+        if (!cancelled) setOnWatchlist(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, ticker]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -108,6 +127,23 @@ export default function StockDetailPage({ params }: { params: Promise<{ ticker: 
   const dayHigh = quote.high != null ? num(quote.high) : null;
   const dayLow = quote.low != null ? num(quote.low) : null;
 
+  const toggleWatchlist = useCallback(async () => {
+    if (onWatchlist == null) return;
+    try {
+      if (onWatchlist) {
+        await watchlistApi.remove(ticker);
+        setOnWatchlist(false);
+        toast.success(`Removed ${ticker} from your watchlist`);
+      } else {
+        await watchlistApi.add(ticker);
+        setOnWatchlist(true);
+        toast.success(`Added ${ticker} to your watchlist`);
+      }
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : 'Could not update watchlist');
+    }
+  }, [onWatchlist, ticker]);
+
   return (
     <div className="flex min-h-screen bg-paper-100">
       <Sidebar />
@@ -120,6 +156,17 @@ export default function StockDetailPage({ params }: { params: Promise<{ ticker: 
             <ChevronLeft size={16} className="mr-1" />
             Back to Discover
           </Link>
+
+          {quote.source === 'live' ? (
+            <p className="text-xs text-paper-muted rounded-lg border border-paper-line bg-white/80 px-3 py-2">
+              Prices reflect live EOD data (Marketstack). Paper trades use the latest quote when you confirm.
+            </p>
+          ) : (
+            <p className="text-xs text-paper-muted rounded-lg border border-paper-line bg-white/80 px-3 py-2">
+              Simulated prices until you set{' '}
+              <code className="text-paper-ink">MARKETSTACK_ACCESS_KEY</code> on the API.
+            </p>
+          )}
 
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
@@ -174,6 +221,36 @@ export default function StockDetailPage({ params }: { params: Promise<{ ticker: 
             </div>
 
             <div className="space-y-6">
+              <Card className="border-paper-line/60">
+                <CardHeader>
+                  <h3 className="font-bold text-paper-ink flex items-center gap-2">
+                    <Star size={18} className={onWatchlist ? 'fill-amber-500 text-amber-600' : ''} />
+                    Watchlist
+                  </h3>
+                </CardHeader>
+                <CardContent className="p-6 space-y-3">
+                  <p className="text-sm text-paper-muted">
+                    {onWatchlist
+                      ? `${quote.ticker} is on your watchlist.`
+                      : `Save ${quote.ticker} to revisit from Discover.`}
+                  </p>
+                  <Button
+                    variant={onWatchlist ? 'outline' : 'primary'}
+                    className="w-full"
+                    disabled={onWatchlist === null}
+                    onClick={() => void toggleWatchlist()}
+                  >
+                    {onWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+                  </Button>
+                  <Link
+                    href="/discover#watchlist"
+                    className="block text-center text-xs text-paper-muted hover:text-paper-ink"
+                  >
+                    View all saved tickers
+                  </Link>
+                </CardContent>
+              </Card>
+
               <Card className="border-paper-line/80 shadow-md overflow-hidden">
                 <CardHeader className="bg-paper-50 border-b border-paper-line">
                   <h3 className="font-bold text-paper-ink flex items-center gap-2">

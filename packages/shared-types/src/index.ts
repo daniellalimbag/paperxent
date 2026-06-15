@@ -137,6 +137,12 @@ export interface PortfolioValuation {
   valuedAt: string;
 }
 
+/** GET /api/watchlist — user-saved tickers from Discover */
+export interface WatchlistItem {
+  ticker: string;
+  addedAt: string;
+}
+
 // GET /api/analytics/:userId — snake_case keys match API JSON
 export type AnalyticsRange = '7d' | '30d' | 'all';
 

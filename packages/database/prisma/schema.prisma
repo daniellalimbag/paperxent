@@ -22,9 +22,22 @@ model User {
   portfolios         Portfolio[]
   transactions       Transaction[]
   portfolioSnapshots PortfolioSnapshot[]
+  watchlistEntries   WatchlistEntry[]
 
   // Supports account creation/admin screens ordered by newest users.
   @@index([createdAt])
+}
+
+/// User-saved tickers from Discover (Phase 3).
+model WatchlistEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  ticker    String   @db.VarChar(16)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ticker])
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 // End-of-day total account value (cash + securities) for analytics charts.
