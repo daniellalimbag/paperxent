@@ -21,12 +21,24 @@ const FILTERS = [
 export function MarketFilterChips() {
   const [activeFilter, setActiveFilter] = React.useState('All stocks');
 
+  React.useEffect(() => {
+    const saved = localStorage.getItem('discover_active_filter');
+    if (saved && FILTERS.includes(saved)) {
+      setActiveFilter(saved);
+    }
+  }, []);
+
+  const handleFilterClick = (filter: string) => {
+    setActiveFilter(filter);
+    localStorage.setItem('discover_active_filter', filter);
+  };
+
   return (
     <div className="flex flex-wrap gap-2">
       {FILTERS.map((filter) => (
         <button
           key={filter}
-          onClick={() => setActiveFilter(filter)}
+          onClick={() => handleFilterClick(filter)}
           className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
             activeFilter === filter
               ? 'bg-sage-500 text-white border-sage-600'

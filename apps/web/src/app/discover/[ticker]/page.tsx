@@ -4,6 +4,7 @@ import { useEffect, useState, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { marketApi, portfolioApi, watchlistApi, ApiError, type MarketQuote } from '@/lib/api-client';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -28,6 +29,7 @@ export default function StockDetailPage({ params }: { params: Promise<{ ticker: 
   const ticker = rawTicker.toUpperCase();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { addViewed } = useRecentlyViewed();
   const [quote, setQuote] = useState<MarketQuote | null>(null);
   const [loading, setLoading] = useState(true);
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
@@ -72,6 +74,12 @@ export default function StockDetailPage({ params }: { params: Promise<{ ticker: 
       void loadQuote();
     }
   }, [user, loadQuote]);
+
+  useEffect(() => {
+    if (quote) {
+      addViewed(quote.ticker, quote.name || quote.ticker);
+    }
+  }, [quote, addViewed]);
 
   useEffect(() => {
     if (!user?.id) return;

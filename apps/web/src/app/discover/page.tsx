@@ -10,6 +10,7 @@ import { MarketFilterChips } from '@/components/discover/MarketFilterChips';
 import { TopMovers } from '@/components/discover/TopMovers';
 import { DiscoverCardGrid } from '@/components/discover/DiscoverCardGrid';
 import { WatchlistPanel } from '@/components/discover/WatchlistPanel';
+import { RecentlyViewedPanel } from '@/components/discover/RecentlyViewedPanel';
 import { marketApi, watchlistApi, ApiError } from '@/lib/api-client';
 import type { DiscoverData } from '@/lib/api-client';
 import type { WatchlistItem } from '@paperxent/shared-types';
@@ -140,11 +141,14 @@ export default function DiscoverPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-12 space-y-10">
-              <WatchlistPanel
-                items={watchlist}
-                loading={watchlistLoading}
-                onRemove={handleWatchRemove}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <WatchlistPanel
+                  items={watchlist}
+                  loading={watchlistLoading}
+                  onRemove={handleWatchRemove}
+                />
+                <RecentlyViewedPanel />
+              </div>
 
               {/* Characteristics / Filters */}
               <section className="space-y-4">
