@@ -220,15 +220,16 @@ export function StockPriceChart({ ticker }: { ticker: string }) {
               }}
               itemStyle={{ padding: '2px 0' }}
               labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
-              formatter={(value: any, name: any) => {
+              formatter={(value: unknown, name: unknown) => {
                 const numValue = Number(value ?? 0);
-                if (name === 'close') return [`$${numValue.toFixed(2)}`, 'Close'];
-                if (name === 'volume')
+                const seriesKey = typeof name === 'string' ? name : String(name ?? '');
+                if (seriesKey === 'close') return [`$${numValue.toFixed(2)}`, 'Close'];
+                if (seriesKey === 'volume')
                   return [
                     numValue.toLocaleString('en-US', { notation: 'compact' }),
                     'Volume',
                   ];
-                return [value, name];
+                return [String(value ?? ''), seriesKey];
               }}
               labelFormatter={(label, payload) => {
                 const row = payload?.[0]?.payload as Row | undefined;
