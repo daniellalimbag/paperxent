@@ -13,9 +13,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="flex min-h-screen bg-paper-100">
-      <div className="flex h-screen min-h-0 shrink-0">
-        <Sidebar />
-      </div>
+      <Sidebar />
 
       <main className="min-h-0 min-w-0 flex-1 overflow-y-auto p-6">
         <div className="max-w-7xl mx-auto space-y-6">

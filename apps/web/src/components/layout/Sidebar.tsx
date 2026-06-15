@@ -44,9 +44,9 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`flex h-full min-h-0 shrink-0 flex-col bg-white border-r border-paper-line transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}
+      className={`sticky top-0 h-screen flex flex-col bg-white border-r border-paper-line transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}
     >
-      <div className={`relative flex min-h-0 flex-1 flex-col p-6 ${isCollapsed ? 'items-center' : ''}`}>
+      <div className={`relative flex flex-col h-full p-6 ${isCollapsed ? 'items-center' : ''}`}>
         <div className={`mb-8 ${isCollapsed ? 'flex justify-center' : 'flex items-center justify-between'}`}>
           {!isCollapsed && (
             <div>
