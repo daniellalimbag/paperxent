@@ -20,8 +20,7 @@ export function RecentlyViewedPanel() {
           <h2 className="text-sm font-bold text-paper-ink uppercase tracking-wider">Recently Viewed</h2>
         </div>
         <Button
-          variant="ghost"
-          size="sm"
+          variant="outline"
           onClick={clearRecent}
           className="h-7 px-2 text-xs text-paper-muted hover:text-red-600"
         >

@@ -220,11 +220,12 @@ export function StockPriceChart({ ticker }: { ticker: string }) {
               }}
               itemStyle={{ padding: '2px 0' }}
               labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
-              formatter={(value: number, name: string) => {
-                if (name === 'close') return [`$${value.toFixed(2)}`, 'Close'];
+              formatter={(value: any, name: any) => {
+                const numValue = Number(value ?? 0);
+                if (name === 'close') return [`$${numValue.toFixed(2)}`, 'Close'];
                 if (name === 'volume')
                   return [
-                    value.toLocaleString('en-US', { notation: 'compact' }),
+                    numValue.toLocaleString('en-US', { notation: 'compact' }),
                     'Volume',
                   ];
                 return [value, name];

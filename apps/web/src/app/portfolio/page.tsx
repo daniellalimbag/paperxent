@@ -429,8 +429,8 @@ export default function PortfolioPage() {
 function SummaryCard({ label, value, subValue, isPositive, icon }: { 
   label: string; 
   value: string; 
-  subValue?: string;
-  isPositive?: boolean;
+  subValue?: string | undefined;
+  isPositive?: boolean | undefined;
   icon: React.ReactNode;
 }) {
   return (
