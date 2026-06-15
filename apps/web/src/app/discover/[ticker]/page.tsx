@@ -34,6 +34,23 @@ export default function StockDetailPage({ params }: { params: Promise<{ ticker: 
   const [holdingsQty, setHoldingsQty] = useState<string | null>(null);
   const [onWatchlist, setOnWatchlist] = useState<boolean | null>(null);
 
+  const toggleWatchlist = useCallback(async () => {
+    if (onWatchlist == null) return;
+    try {
+      if (onWatchlist) {
+        await watchlistApi.remove(ticker);
+        setOnWatchlist(false);
+        toast.success(`Removed ${ticker} from your watchlist`);
+      } else {
+        await watchlistApi.add(ticker);
+        setOnWatchlist(true);
+        toast.success(`Added ${ticker} to your watchlist`);
+      }
+    } catch (e) {
+      toast.error(e instanceof ApiError ? e.message : 'Could not update watchlist');
+    }
+  }, [onWatchlist, ticker]);
+
   const loadQuote = useCallback(async () => {
     try {
       const data = await marketApi.getQuote(rawTicker);
@@ -99,23 +116,6 @@ export default function StockDetailPage({ params }: { params: Promise<{ ticker: 
       cancelled = true;
     };
   }, [user?.id, quote, ticker]);
-
-  const toggleWatchlist = useCallback(async () => {
-    if (onWatchlist == null) return;
-    try {
-      if (onWatchlist) {
-        await watchlistApi.remove(ticker);
-        setOnWatchlist(false);
-        toast.success(`Removed ${ticker} from your watchlist`);
-      } else {
-        await watchlistApi.add(ticker);
-        setOnWatchlist(true);
-        toast.success(`Added ${ticker} to your watchlist`);
-      }
-    } catch (e) {
-      toast.error(e instanceof ApiError ? e.message : 'Could not update watchlist');
-    }
-  }, [onWatchlist, ticker]);
 
   if (authLoading || !user || loading) {
     return (
