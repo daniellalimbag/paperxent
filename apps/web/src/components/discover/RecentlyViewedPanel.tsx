@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { History, X } from 'lucide-react';
+import { History } from 'lucide-react';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
