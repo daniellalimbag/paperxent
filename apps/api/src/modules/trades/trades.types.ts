@@ -1,3 +1,5 @@
+import type { TradeAnalysis } from './trade-analysis.types.js';
+
 export type TradeSide = 'BUY' | 'SELL';
 
 export interface ExecuteTradeInput {
@@ -51,4 +53,5 @@ export interface TradeExecutionResult {
   portfolioQuantity: string;
   averageBuyPrice: string | null;
   executedAt: string;
+  analysis?: TradeAnalysis;
 }

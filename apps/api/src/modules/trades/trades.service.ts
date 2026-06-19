@@ -13,6 +13,7 @@ import type {
   TradePreviewInput,
   TradePreviewResult,
 } from './trades.types.js';
+import { TradeAnalysisService } from './trade-analysis.service.js';
 
 const TICKER_PATTERN = /^[A-Z][A-Z0-9.]{0,15}$/;
 /** Simulated feed ticks every second; live quotes can lag minutes between trades. */
@@ -38,6 +39,7 @@ export class TradesService {
     private readonly marketService = new MarketService(),
     private readonly authRepository = new AuthRepository(),
     private readonly portfoliosRepository = new PortfoliosRepository(),
+    private readonly tradeAnalysisService = new TradeAnalysisService(),
   ) {}
 
   async previewTrade(input: TradePreviewInput): Promise<TradePreviewResult> {
@@ -194,7 +196,23 @@ export class TradesService {
       price: price.toFixed(4),
     };
 
-    return this.tradesRepository.executeTrade(normalizedInput);
+    const result = await this.tradesRepository.executeTrade(normalizedInput);
+
+    try {
+      const analysis = await this.tradeAnalysisService.analyzeTrade({
+        userId: input.userId,
+        side: result.side,
+        ticker: result.ticker,
+        quantity: result.quantity,
+        price: result.price,
+        userBalance: result.userBalance,
+        portfolioQuantity: result.portfolioQuantity,
+        averageBuyPrice: result.averageBuyPrice,
+      });
+      return { ...result, analysis };
+    } catch {
+      return result;
+    }
   }
 
   private validateTicker(ticker: string) {

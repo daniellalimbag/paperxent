@@ -91,6 +91,36 @@ export interface TradeExecutionResult {
   portfolioQuantity: string;
   averageBuyPrice: string | null;
   executedAt: string;
+  analysis?: TradeAnalysis;
+}
+
+export type TradeAnalysisInsightType =
+  | 'concentration'
+  | 'cash'
+  | 'diversification'
+  | 'position'
+  | 'performance';
+
+export type TradeAnalysisSeverity = 'positive' | 'neutral' | 'caution';
+
+export interface TradeAnalysisInsight {
+  type: TradeAnalysisInsightType;
+  severity: TradeAnalysisSeverity;
+  title: string;
+  detail: string;
+}
+
+export interface TradeAnalysisMetrics {
+  position_weight_pct: string;
+  cash_remaining_pct: string;
+  trade_notional: string;
+  portfolio_value: string;
+}
+
+export interface TradeAnalysis {
+  summary: string;
+  insights: TradeAnalysisInsight[];
+  metrics: TradeAnalysisMetrics;
 }
 
 /** One row in GET /api/transactions/:userId */

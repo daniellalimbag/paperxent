@@ -4,9 +4,10 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { toast } from 'sonner';
 import { tradeApi, ApiError, type TradePreviewResult } from '@/lib/api-client';
-import type { TradeSide } from '@paperxent/shared-types';
+import type { TradeSide, TradeExecutionResult } from '@paperxent/shared-types';
 import { DollarSign, Hash, ArrowRight, AlertCircle, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { TradeAnalysisPanel } from './TradeAnalysisPanel';
 
 interface TradeFormProps {
   initialTicker?: string;
@@ -30,6 +31,7 @@ export function TradeForm({
   const [orderMode, setOrderMode] = useState<OrderMode>('SHARES');
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<TradePreviewResult | null>(null);
+  const [execution, setExecution] = useState<TradeExecutionResult | null>(null);
 
   // Update ticker if initialTicker prop changes
   useEffect(() => {
@@ -42,6 +44,7 @@ export function TradeForm({
   // Clear preview when inputs change
   useEffect(() => {
     setPreview(null);
+    setExecution(null);
   }, [ticker, amount, side, orderMode]);
 
   const handlePreview = async (e: FormEvent) => {
@@ -76,7 +79,7 @@ export function TradeForm({
 
     try {
       setLoading(true);
-      await tradeApi.executeTrade({
+      const result = await tradeApi.executeTrade({
         side,
         ticker: ticker.toUpperCase(),
         ...(orderMode === 'SHARES' ? { quantity: amount } : { notional: amount }),
@@ -86,15 +89,18 @@ export function TradeForm({
       const units = orderMode === 'SHARES' ? `${amount} shares` : `$${amount}`;
       toast.success(`Successfully ${action} ${units} of ${ticker.toUpperCase()}`);
 
-      // Reset form
+      void refreshUser();
+      window.dispatchEvent(new CustomEvent('paperxent:trade-executed'));
+
+      if (result.analysis) {
+        setExecution(result);
+        setPreview(null);
+        return;
+      }
+
       if (!lockTicker) setTicker('');
       setAmount('');
       setPreview(null);
-      
-      // Refresh user balance and trigger global portfolio refresh
-      void refreshUser();
-      window.dispatchEvent(new CustomEvent('paperxent:trade-executed'));
-      
       onSuccess?.();
     } catch (err) {
       if (err instanceof ApiError) {
@@ -107,8 +113,29 @@ export function TradeForm({
     }
   };
 
+  const handleDone = () => {
+    if (!lockTicker) setTicker('');
+    setAmount('');
+    setPreview(null);
+    setExecution(null);
+    onSuccess?.();
+  };
+
   const formContent = (
     <div className="space-y-6">
+      {execution?.analysis ? (
+        <div className="space-y-4">
+          <TradeAnalysisPanel analysis={execution.analysis} />
+          <button
+            type="button"
+            onClick={handleDone}
+            className="w-full py-4 px-4 rounded-xl font-bold text-lg bg-sage-600 text-white hover:bg-sage-700 transition-all shadow-md"
+          >
+            Done
+          </button>
+        </div>
+      ) : (
+        <>
       <div className="space-y-4">
         <div className="flex gap-2 p-1 bg-paper-100 rounded-lg">
           <button
@@ -275,6 +302,8 @@ export function TradeForm({
         >
           {loading ? 'Loading...' : 'Preview Order'}
         </button>
+      )}
+        </>
       )}
     </div>
   );

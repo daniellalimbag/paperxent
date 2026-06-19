@@ -89,6 +89,9 @@ describe('Trade Core (integration)', () => {
       expect(res.body.data.ticker).toBe('AAPL');
       expect(parseFloat(res.body.data.quantity)).toBe(2);
       expect(parseFloat(res.body.data.price)).toBe(150);
+      expect(res.body.data.analysis).toBeDefined();
+      expect(res.body.data.analysis.summary).toBeTypeOf('string');
+      expect(Array.isArray(res.body.data.analysis.insights)).toBe(true);
     });
 
     it('executes a SELL order by notional', async () => {
