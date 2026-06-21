@@ -25,6 +25,7 @@ export default defineConfig({
     /** Integration tests use seeded Redis quotes, not live Marketstack (developers may have the key in root `.env`). */
     env: {
       MARKETSTACK_ACCESS_KEY: '',
+      GEMINI_API_KEY: '',
     },
   },
 });

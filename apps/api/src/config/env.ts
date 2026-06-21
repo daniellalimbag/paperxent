@@ -16,6 +16,7 @@ loadEnv({ path: path.join(apiPackageRoot, '.env'), override: true });
 // Integration tests expect the simulated Redis feed; never use live Marketstack during Vitest.
 if (process.env.VITEST === 'true') {
   delete process.env.MARKETSTACK_ACCESS_KEY;
+  delete process.env.GEMINI_API_KEY;
 }
 
 const envSchema = z.object({

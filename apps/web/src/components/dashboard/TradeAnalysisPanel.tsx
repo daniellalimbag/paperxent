@@ -35,9 +35,23 @@ export function TradeAnalysisPanel({ analysis }: { analysis: TradeAnalysis }) {
           <div className="rounded-lg bg-sage-100 p-2 text-sage-700">
             <Sparkles size={18} />
           </div>
-          <div className="space-y-1">
-            <p className="text-xs font-bold uppercase tracking-widest text-sage-700">Trade analysis</p>
+          <div className="space-y-1 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-xs font-bold uppercase tracking-widest text-sage-700">Trade analysis</p>
+              {analysis.source === 'gemini' ? (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-violet-100 text-violet-800">
+                  Gemini
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-paper-100 text-paper-muted">
+                  Rules
+                </span>
+              )}
+            </div>
             <p className="text-sm text-paper-ink leading-relaxed">{analysis.summary}</p>
+            {analysis.source === 'gemini' && (
+              <p className="text-[10px] text-paper-muted">Educational only — not financial advice.</p>
+            )}
           </div>
         </div>
       </div>

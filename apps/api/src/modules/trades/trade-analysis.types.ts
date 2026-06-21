@@ -27,6 +27,8 @@ export interface TradeAnalysis {
   summary: string;
   insights: TradeAnalysisInsight[];
   metrics: TradeAnalysisMetrics;
+  /** `gemini` when GEMINI_API_KEY is set and the model responded; otherwise `rules`. */
+  source?: 'gemini' | 'rules';
 }
 
 export interface TradeAnalysisInput {

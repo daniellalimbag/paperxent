@@ -1,10 +1,16 @@
 import { Prisma } from '@prisma/client';
 import { PortfoliosService } from '../portfolios/portfolios.service.js';
 import { MarketService } from '../market/market.service.js';
+import {
+  generateGeminiTradeAnalysis,
+  isGeminiEnabled,
+  type GeminiTradeContext,
+} from '../ai/gemini.service.js';
 import type {
   TradeAnalysis,
   TradeAnalysisInsight,
   TradeAnalysisInput,
+  TradeAnalysisMetrics,
 } from './trade-analysis.types.js';
 
 const CONCENTRATION_HIGH = 40;
@@ -24,6 +30,21 @@ function fmtUsd(n: Prisma.Decimal): string {
   return n.toFixed(2);
 }
 
+interface AnalysisContext {
+  input: TradeAnalysisInput;
+  quantity: Prisma.Decimal;
+  price: Prisma.Decimal;
+  tradeNotional: Prisma.Decimal;
+  cash: Prisma.Decimal;
+  holdingsQty: Prisma.Decimal;
+  portfolioValue: Prisma.Decimal;
+  positionWeightPct: Prisma.Decimal;
+  cashRemainingPct: Prisma.Decimal;
+  dayChangePct: Prisma.Decimal | null;
+  metrics: TradeAnalysisMetrics;
+  holdings: GeminiTradeContext['holdings'];
+}
+
 export class TradeAnalysisService {
   constructor(
     private readonly portfoliosService = new PortfoliosService(),
@@ -31,6 +52,37 @@ export class TradeAnalysisService {
   ) {}
 
   async analyzeTrade(input: TradeAnalysisInput): Promise<TradeAnalysis> {
+    const context = await this.buildContext(input);
+    const ruleBased = this.buildRuleBasedAnalysis(context);
+
+    if (isGeminiEnabled()) {
+      const gemini = await generateGeminiTradeAnalysis({
+        side: input.side,
+        ticker: input.ticker,
+        quantity: input.quantity,
+        price: input.price,
+        userBalance: input.userBalance,
+        portfolioQuantity: input.portfolioQuantity,
+        averageBuyPrice: input.averageBuyPrice,
+        dayChangePercent: context.dayChangePct?.toFixed(2) ?? null,
+        metrics: context.metrics,
+        holdings: context.holdings,
+      });
+
+      if (gemini) {
+        return {
+          summary: gemini.summary,
+          insights: gemini.insights,
+          metrics: context.metrics,
+          source: 'gemini',
+        };
+      }
+    }
+
+    return { ...ruleBased, source: 'rules' };
+  }
+
+  private async buildContext(input: TradeAnalysisInput): Promise<AnalysisContext> {
     const quantity = new Prisma.Decimal(input.quantity);
     const price = new Prisma.Decimal(input.price);
     const tradeNotional = quantity.mul(price);
@@ -39,6 +91,8 @@ export class TradeAnalysisService {
 
     let securities = new Prisma.Decimal(0);
     let positionValue = holdingsQty.mul(price);
+    let holdings: GeminiTradeContext['holdings'] = [];
+
     try {
       const valuation = await this.portfoliosService.getValuation({ userId: input.userId });
       securities = new Prisma.Decimal(valuation.totalPortfolioValue);
@@ -46,8 +100,19 @@ export class TradeAnalysisService {
       if (asset) {
         positionValue = new Prisma.Decimal(asset.marketValue);
       }
+
+      const total = cash.plus(securities);
+      holdings = valuation.assets
+        .map((a) => ({
+          ticker: a.ticker,
+          market_value: new Prisma.Decimal(a.marketValue).toFixed(2),
+          percent: total.isZero()
+            ? '0'
+            : new Prisma.Decimal(a.marketValue).div(total).mul(100).toFixed(1),
+        }))
+        .sort((a, b) => parseFloat(b.percent) - parseFloat(a.percent))
+        .slice(0, 8);
     } catch {
-      // If quotes are missing, fall back to this ticker's post-trade value only.
       securities = holdingsQty.mul(price);
     }
 
@@ -59,6 +124,33 @@ export class TradeAnalysisService {
     const dayChangePct = quote?.changePercent
       ? new Prisma.Decimal(quote.changePercent).mul(100)
       : null;
+
+    const metrics: TradeAnalysisMetrics = {
+      position_weight_pct: fmtPct(positionWeightPct),
+      cash_remaining_pct: fmtPct(cashRemainingPct),
+      trade_notional: fmtUsd(tradeNotional),
+      portfolio_value: fmtUsd(portfolioValue),
+    };
+
+    return {
+      input,
+      quantity,
+      price,
+      tradeNotional,
+      cash,
+      holdingsQty,
+      portfolioValue,
+      positionWeightPct,
+      cashRemainingPct,
+      dayChangePct,
+      metrics,
+      holdings,
+    };
+  }
+
+  private buildRuleBasedAnalysis(context: AnalysisContext): Omit<TradeAnalysis, 'source'> {
+    const { input, quantity, price, holdingsQty, positionWeightPct, cashRemainingPct, tradeNotional, dayChangePct, metrics } =
+      context;
 
     const insights: TradeAnalysisInsight[] = [];
 
@@ -88,17 +180,18 @@ export class TradeAnalysisService {
       });
     }
 
-    const summary = this.buildSummary(input.side, input.ticker, insights, positionWeightPct, cashRemainingPct);
+    const summary = this.buildSummary(
+      input.side,
+      input.ticker,
+      insights,
+      positionWeightPct,
+      cashRemainingPct,
+    );
 
     return {
       summary,
       insights: insights.slice(0, 4),
-      metrics: {
-        position_weight_pct: fmtPct(positionWeightPct),
-        cash_remaining_pct: fmtPct(cashRemainingPct),
-        trade_notional: fmtUsd(tradeNotional),
-        portfolio_value: fmtUsd(portfolioValue),
-      },
+      metrics,
     };
   }
 

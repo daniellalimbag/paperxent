@@ -6,6 +6,7 @@ import { logger } from './shared/logging/logger.js';
 import { initializeEventSystem } from './shared/events/setup.js';
 import { schedulePortfolioSnapshotCron } from './shared/jobs/portfolio-snapshot.cron.js';
 import { isMarketstackEnabled } from './modules/market/marketstack.service.js';
+import { isGeminiEnabled } from './modules/ai/gemini.service.js';
 
 const app = createApp();
 
@@ -18,6 +19,7 @@ const server = app.listen(env.API_PORT, () => {
   logger.info('PaperXent API listening', {
     url: `http://localhost:${env.API_PORT}`,
     marketstackConfigured: isMarketstackEnabled(),
+    geminiConfigured: isGeminiEnabled(),
   });
 });
 
