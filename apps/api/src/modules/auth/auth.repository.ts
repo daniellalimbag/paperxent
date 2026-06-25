@@ -2,6 +2,7 @@ import { Prisma, type PrismaClient } from '@prisma/client';
 import { prisma } from '@paperxent/database';
 import { AppError } from '../../shared/errors/app-error.js';
 import type { RegisterInput, LoginInput, RefreshTokenData } from './auth.types.js';
+import { DEFAULT_STARTING_BALANCE } from '../../config/paper-trading.js';
 
 export class AuthRepository {
   constructor(private readonly db: PrismaClient = prisma) {}
@@ -33,7 +34,8 @@ export class AuthRepository {
         data: {
           email: input.email,
           passwordHash: hashedPassword,
-          balance: '100000.00', // Starting balance for paper trading
+          balance: DEFAULT_STARTING_BALANCE,
+          startingBalance: DEFAULT_STARTING_BALANCE,
         },
       });
     } catch (error) {

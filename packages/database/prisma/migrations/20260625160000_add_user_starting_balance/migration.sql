@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN "startingBalance" DECIMAL(20,4) NOT NULL DEFAULT 100000;

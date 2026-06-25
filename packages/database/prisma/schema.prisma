@@ -25,6 +25,8 @@ model User {
   passwordHash       String
   // Decimal avoids floating-point errors for cash balances.
   balance            Decimal              @default(0) @db.Decimal(20, 4)
+  // Cash granted on signup and after portfolio reset.
+  startingBalance    Decimal              @default(100000) @db.Decimal(20, 4)
   createdAt          DateTime             @default(now())
   portfolios         Portfolio[]
   transactions       Transaction[]

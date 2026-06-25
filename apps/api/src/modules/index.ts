@@ -8,6 +8,7 @@ import { usersRouter } from './users/users.routes.js';
 import { analyticsRouter } from './analytics/analytics.routes.js';
 import { alertsRouter } from './alerts/alerts.routes.js';
 import { watchlistRouter } from './watchlist/watchlist.routes.js';
+import { settingsRouter } from './settings/settings.routes.js';
 
 export const apiRouter = Router();
 
@@ -20,3 +21,4 @@ apiRouter.use('/portfolio', portfoliosRouter);
 apiRouter.use('/market', marketRouter);
 apiRouter.use('/watchlist', watchlistRouter);
 apiRouter.use('/alerts', alertsRouter);
+apiRouter.use('/settings', settingsRouter);

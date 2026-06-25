@@ -17,6 +17,7 @@ import type {
   PaperAlert,
   PaperAlertsPayload,
   PaperAlertType,
+  UserSettings,
 } from '@paperxent/shared-types';
 
 import { getPublicApiUrl } from '@/lib/public-env';
@@ -407,6 +408,26 @@ export const alertsApi = {
     await request<void>(`/api/alerts/${encodeURIComponent(id)}`, {
       method: 'DELETE',
     });
+  },
+};
+
+export const settingsApi = {
+  async get(): Promise<UserSettings> {
+    const response = await request<ApiSuccessResponse<UserSettings>>('/api/settings');
+    return response.data;
+  },
+  async updateStartingBalance(startingBalance: string): Promise<UserSettings> {
+    const response = await request<ApiSuccessResponse<UserSettings>>('/api/settings', {
+      method: 'PATCH',
+      body: JSON.stringify({ startingBalance }),
+    });
+    return response.data;
+  },
+  async resetPortfolio(): Promise<UserSettings> {
+    const response = await request<ApiSuccessResponse<UserSettings>>('/api/settings/reset-portfolio', {
+      method: 'POST',
+    });
+    return response.data;
   },
 };
 

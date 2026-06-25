@@ -36,6 +36,7 @@ export interface AuthResponse {
     id: string;
     email: string;
     balance: string;
+    startingBalance: string;
     createdAt: string;
   };
   tokens: TokenPair;
@@ -193,6 +194,14 @@ export interface PaperAlert {
 export interface PaperAlertsPayload {
   active: PaperAlert[];
   triggered: PaperAlert[];
+}
+
+export interface UserSettings {
+  id: string;
+  email: string;
+  balance: string;
+  startingBalance: string;
+  createdAt: string;
 }
 
 // GET /api/analytics/:userId — snake_case keys match API JSON

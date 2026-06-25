@@ -27,6 +27,7 @@ export interface AuthResponse {
     id: string;
     email: string;
     balance: string;
+    startingBalance: string;
     createdAt: string;
   };
   tokens: TokenPair;

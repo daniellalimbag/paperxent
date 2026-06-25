@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { PortfolioSettings } from '@/components/settings/PortfolioSettings';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function SettingsPage() {
@@ -29,7 +30,7 @@ export default function SettingsPage() {
         <div className="max-w-2xl mx-auto space-y-6">
           <div>
             <h1 className="text-2xl font-semibold text-paper-ink">Settings</h1>
-            <p className="text-sm text-paper-muted mt-1">Account overview. More controls can be added here later.</p>
+            <p className="text-sm text-paper-muted mt-1">Manage your paper account and portfolio defaults.</p>
           </div>
 
           <Card>
@@ -41,21 +42,15 @@ export default function SettingsPage() {
                 <p className="text-paper-muted">Email</p>
                 <p className="text-paper-ink font-medium">{user.email}</p>
               </div>
-              <div>
-                <p className="text-paper-muted">Paper balance</p>
-                <p className="text-paper-ink font-medium">${user.balance}</p>
-              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <h2 className="text-lg font-semibold text-paper-ink">Security</h2>
+              <h2 className="text-lg font-semibold text-paper-ink">Paper portfolio</h2>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-paper-muted">
-                Change password and API keys are not implemented yet — use logout and re-register a test account if needed.
-              </p>
+              <PortfolioSettings />
             </CardContent>
           </Card>
         </div>

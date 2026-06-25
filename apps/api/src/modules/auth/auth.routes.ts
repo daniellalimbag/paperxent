@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { AuthService } from './auth.service.js';
 import { AuthRepository } from './auth.repository.js';
 import { verifyToken } from './auth.middleware.js';
+import { formatAuthUser } from './auth-user.dto.js';
 import type { RegisterInput, LoginInput, RefreshTokenInput, AuthResponse } from './auth.types.js';
 
 const router = Router();
@@ -22,12 +23,7 @@ router.get('/me', verifyToken, async (req, res, next) => {
     }
 
     res.status(200).json({
-      user: {
-        id: user.id,
-        email: user.email,
-        balance: user.balance.toString(),
-        createdAt: user.createdAt.toISOString(),
-      },
+      user: formatAuthUser(user),
     });
   } catch (error) {
     next(error);
@@ -78,12 +74,7 @@ router.post('/register', async (req, res, next) => {
     });
 
     const response: AuthResponse = {
-      user: {
-        id: user.id,
-        email: user.email,
-        balance: user.balance.toString(),
-        createdAt: user.createdAt.toISOString(),
-      },
+      user: formatAuthUser(user),
       tokens,
     };
 
@@ -134,12 +125,7 @@ router.post('/login', async (req, res, next) => {
     });
 
     const response: AuthResponse = {
-      user: {
-        id: user.id,
-        email: user.email,
-        balance: user.balance.toString(),
-        createdAt: user.createdAt.toISOString(),
-      },
+      user: formatAuthUser(user),
       tokens,
     };
 
@@ -198,12 +184,7 @@ router.post('/refresh', async (req, res, next) => {
     });
 
     const response: AuthResponse = {
-      user: {
-        id: user.id,
-        email: user.email,
-        balance: user.balance.toString(),
-        createdAt: user.createdAt.toISOString(),
-      },
+      user: formatAuthUser(user),
       tokens,
     };
 
