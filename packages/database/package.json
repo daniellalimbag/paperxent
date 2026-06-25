@@ -13,9 +13,10 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "db:generate": "prisma generate --schema prisma/schema.prisma",
-    "db:migrate": "prisma migrate dev --schema prisma/schema.prisma",
-    "db:studio": "prisma studio --schema prisma/schema.prisma",
+    "db:generate": "node scripts/with-root-env.mjs generate --schema prisma/schema.prisma",
+    "db:migrate": "node scripts/with-root-env.mjs migrate dev --schema prisma/schema.prisma",
+    "db:migrate:deploy": "node scripts/with-root-env.mjs migrate deploy --schema prisma/schema.prisma",
+    "db:studio": "node scripts/with-root-env.mjs studio --schema prisma/schema.prisma",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit"
   },
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.10",
+    "dotenv": "^16.4.5",
     "prisma": "5.22.0"
   }
 }
