@@ -1,6 +1,7 @@
 import { globalEventBus } from './event-bus.js';
 import { LoggingSubscriber } from './subscribers/logging.subscriber.js';
 import { AnalyticsSubscriber } from './subscribers/analytics.subscriber.js';
+import { AlertsSubscriber } from './subscribers/alerts.subscriber.js';
 
 /**
  * Initialize the event system with default subscribers
@@ -14,6 +15,9 @@ export function initializeEventSystem(): void {
   // Register analytics subscriber
   const analyticsSubscriber = new AnalyticsSubscriber();
   globalEventBus.subscribe(analyticsSubscriber);
+
+  const alertsSubscriber = new AlertsSubscriber();
+  globalEventBus.subscribe(alertsSubscriber);
 
   console.log('[EventSystem] Initialized with default subscribers');
 }

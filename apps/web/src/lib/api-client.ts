@@ -14,6 +14,9 @@ import type {
   AnalyticsRange,
   PortfolioAnalyticsPayload,
   WatchlistItem,
+  PaperAlert,
+  PaperAlertsPayload,
+  PaperAlertType,
 } from '@paperxent/shared-types';
 
 import { getPublicApiUrl } from '@/lib/public-env';
@@ -383,5 +386,35 @@ export const watchlistApi = {
   },
 };
 
+export const alertsApi = {
+  async list(): Promise<PaperAlertsPayload> {
+    const response = await request<ApiSuccessResponse<PaperAlertsPayload>>('/api/alerts');
+    return response.data;
+  },
+  async create(input: {
+    ticker: string;
+    type: PaperAlertType;
+    targetPrice?: string;
+    percentThreshold?: string;
+  }): Promise<PaperAlert> {
+    const response = await request<ApiSuccessResponse<PaperAlert>>('/api/alerts', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    return response.data;
+  },
+  async remove(id: string): Promise<void> {
+    await request<void>(`/api/alerts/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
 export { ApiError };
-export type { TradePreviewInput, TradePreviewResult } from '@paperxent/shared-types';
+export type {
+  TradePreviewInput,
+  TradePreviewResult,
+  PaperAlert,
+  PaperAlertType,
+  PaperAlertsPayload,
+} from '@paperxent/shared-types';

@@ -175,6 +175,26 @@ export interface WatchlistItem {
   addedAt: string;
 }
 
+export type PaperAlertType = 'PRICE_ABOVE' | 'PRICE_BELOW' | 'PERCENT_UP' | 'PERCENT_DOWN';
+
+export interface PaperAlert {
+  id: string;
+  ticker: string;
+  type: PaperAlertType;
+  targetPrice: string | null;
+  percentThreshold: string | null;
+  baselinePrice: string;
+  isActive: boolean;
+  triggeredAt: string | null;
+  triggeredPrice: string | null;
+  createdAt: string;
+}
+
+export interface PaperAlertsPayload {
+  active: PaperAlert[];
+  triggered: PaperAlert[];
+}
+
 // GET /api/analytics/:userId — snake_case keys match API JSON
 export type AnalyticsRange = '7d' | '30d' | 'all';
 

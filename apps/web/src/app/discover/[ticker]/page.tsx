@@ -8,9 +8,10 @@ import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { marketApi, portfolioApi, watchlistApi, ApiError, type MarketQuote } from '@/lib/api-client';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { ChevronLeft, DollarSign, Briefcase, Star } from 'lucide-react';
+import { ChevronLeft, DollarSign, Briefcase, Star, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { TradeModal } from '@/components/discover/TradeModal';
+import { CreateAlertForm } from '@/components/alerts/CreateAlertForm';
 import { StockPriceChart } from '@/components/discover/StockPriceChart';
 import type { PortfolioValuation } from '@paperxent/shared-types';
 import { toast } from 'sonner';
@@ -255,6 +256,24 @@ export default function StockDetailPage({ params }: { params: Promise<{ ticker: 
                     className="block text-center text-xs text-paper-muted hover:text-paper-ink"
                   >
                     View all saved tickers
+                  </Link>
+                </CardContent>
+              </Card>
+
+              <Card className="border-paper-line/60">
+                <CardHeader>
+                  <h3 className="font-bold text-paper-ink flex items-center gap-2">
+                    <Bell size={18} />
+                    Price alert
+                  </h3>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <CreateAlertForm ticker={quote.ticker} currentPrice={displayPrice} />
+                  <Link
+                    href="/alerts"
+                    className="block text-center text-xs text-paper-muted hover:text-paper-ink mt-3"
+                  >
+                    View all alerts
                   </Link>
                 </CardContent>
               </Card>

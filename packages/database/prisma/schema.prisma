@@ -12,6 +12,13 @@ enum TransactionType {
   SELL
 }
 
+enum PaperAlertType {
+  PRICE_ABOVE
+  PRICE_BELOW
+  PERCENT_UP
+  PERCENT_DOWN
+}
+
 model User {
   id                 String               @id @default(cuid())
   email              String               @unique
@@ -23,6 +30,7 @@ model User {
   transactions       Transaction[]
   portfolioSnapshots PortfolioSnapshot[]
   watchlistEntries   WatchlistEntry[]
+  paperAlerts        PaperAlert[]
 
   // Supports account creation/admin screens ordered by newest users.
   @@index([createdAt])
@@ -38,6 +46,25 @@ model WatchlistEntry {
 
   @@unique([userId, ticker])
   @@index([userId, createdAt(sort: Desc)])
+}
+
+/// Price / percent-move alerts for paper trading (Phase 4).
+model PaperAlert {
+  id               String         @id @default(cuid())
+  userId           String
+  ticker           String         @db.VarChar(16)
+  type             PaperAlertType
+  targetPrice      Decimal?       @db.Decimal(20, 4)
+  percentThreshold Decimal?       @db.Decimal(10, 6)
+  baselinePrice    Decimal        @db.Decimal(20, 4)
+  isActive         Boolean        @default(true)
+  triggeredAt      DateTime?
+  triggeredPrice   Decimal?       @db.Decimal(20, 4)
+  createdAt        DateTime       @default(now())
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive, createdAt(sort: Desc)])
+  @@index([ticker, isActive])
 }
 
 // End-of-day total account value (cash + securities) for analytics charts.
